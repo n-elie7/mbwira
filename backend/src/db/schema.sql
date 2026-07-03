@@ -15,3 +15,12 @@ CREATE TABLE messages (
     risk_flag VARCHAR(20), -- 'none' | 'moderate' | 'high' — set later by the AI service
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Referral resources: static reference data, not user data
+CREATE TABLE referrals (
+    id SERIAL PRIMARY KEY,
+    category VARCHAR(30) NOT NULL,
+    region VARCHAR(50), -- e.g. 'Kigali', 'national'
+    name VARCHAR(120) NOT NULL,
+    contact_info VARCHAR(200) NOT NULL,
+    description TEXT
+);
