@@ -47,9 +47,8 @@ class Message(Base):
     name: Mapped[str] = mapped_column(String(120))
     contact_info: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text)
-    # ------- engine / session factory -------
-engine = create_async_engine(settings.database_url, echo=False)
-AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    engine = create_async_engine(settings.database_url, echo=False)
+    AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_db() -> AsyncSession:
