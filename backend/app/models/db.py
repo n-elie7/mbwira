@@ -37,4 +37,15 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     session: Mapped["Session"] = relationship(back_populates="messages")
+    class Referral(Base):
+    """Real-world help resources (e.g. Isange One Stop Centres, hotlines)."""
+    __tablename__ = "referrals"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    category: Mapped[str] = mapped_column(String(30))
+    region: Mapped[str | None] = mapped_column(String(50))
+    name: Mapped[str] = mapped_column(String(120))
+    contact_info: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str | None] = mapped_column(Text)
     
+
