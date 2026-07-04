@@ -407,6 +407,12 @@ section {
 }
 
 
+footer{
+    margin-bottom: 1.5rem;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    color: var(--forest);
+}
 .reveal {
     opacity: 0;
     transform: translateY(24px);
@@ -425,4 +431,4 @@ section {
     animation-delay: 0.4s;
 }
 
- @keyframes reveal { to { opacity: 1; transform: translateY(0); } }
+@keyframes reveal { to { opacity: 1; transform: translateY(0); } }
