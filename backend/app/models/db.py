@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 import uuid
 
-from sqlalchemy import String, DateTime
+from sqlalchemy import String, DateTime, Text, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.config import settings
@@ -25,3 +25,16 @@ class Session(Base):
     expires_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.utcnow() + timedelta(hours=24)
     )
+class Message(Base):
+    """A single chat message, tied only to a session token — never to a person."""
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
+    sender: Mapped[str] = mapped_column(String(10))
+    content: Mapped[str] = mapped_column(Text)
+    risk_flag: Mapped[str | None] = mapped_column(String(20))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    session: Mapped["Session"] = relationship(back_populates="messages")
+    
