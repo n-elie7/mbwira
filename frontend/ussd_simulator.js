@@ -9,6 +9,7 @@ const screen = document.getElementById("screenContent");
 const inputDisplay = document.getElementById("inputDisplay");
 const log = document.getElementById("log");
 
+// this function 
 function logLine(kind, text) {
   const div = document.createElement("div");
   div.className = kind;
@@ -16,3 +17,5 @@ function logLine(kind, text) {
   log.appendChild(div);
   log.scrollTop = log.scrollHeight;
 }
+
+
