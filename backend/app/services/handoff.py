@@ -39,6 +39,7 @@ if existing and existing.status == "pending":
     session.escalated = True
     await db.commit()
     await db.refresh(escalation)
+    await db.refresh(session)
     logger.warning(
         "Escalation created: session=%s reason=%s level=%s",
         session.session_id, reason, level,
