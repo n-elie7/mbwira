@@ -71,7 +71,7 @@ def check_user_message(text: str) -> SafetySignal:
 
     for kw in GBV_KEYWORDS_EN + GBV_KEYWORDS_RW:
         if kw in t:
-            return SafetySignal(True, "gender_based_violance", kw)
+            return SafetySignal(True, "gender_based_violence", kw)
 
     for kw in MEDICAL_EMERGENCY_EN + MEDICAL_EMERGENCY_RW:
         if kw in t:
@@ -112,7 +112,7 @@ def safety_response_text(reason: str, lang: str = "rw") -> str:
             "\n\nYou matter. Please call 114 now — free and confidential. "
             "A counselor will also reach out within 24 hours."
         )
-    if reason == "gender_based_violance":
+    if reason == "gender_based_violence":
         if lang == "rw":
             return (
                 "\n\nUri mu mutekano wo gushaka ubufasha. Hamagara Isange 3029 "
