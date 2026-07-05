@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mbwira USSD Simulator</title>
+
+    </head>
+    <body>
+        <div class="header">
+            <h1>Mbwira USSD Simulator</h1>
+            <p>Gerageza Mbwira nk'aho uri telefone ya feature phone.<br>Simulate Mbwira as if dialing from any basic phone</p>
+
+        </div>
+        <div class="layout">
+            <div>
+                <div class="phone-frame">
+                    <div class="phone-speaker"></div>
+                    <div class="phone-screen" id="screen">
+                        <div class="status"><span>MTN RW</span><span>📶 🔋</span></div>
+                        <div class="content" id="screenContent">Press *384*69699# SEND to start</div>
+                        <div class="input-area"><span id="inputDisplay">_</span><span>OPTIONS</span></div>
+                    </div>
+                    <div class="phone-frame">
+                        <button class="key" data-k="1">1</button>
+                        <button class="key" data-k="2">2</button>
+                        <button class="key" data-k="3">3</button>
+                        <button class="key" data-k="4">4</button>
+                        <button class="key" data-k="5">5</button>
+                        <button class="key" data-k="6">6</button>
+                        <button class="key" data-k="7">7</button>
+                        <button class="key" data-k="8">8</button>
+                        <button class="key" data-k="9">9</button>
+                        <button class="key start" data-k="*">*</button>
+                        <button class="key" data-k="0">0</button>
+                        <button class="key hash" data-k="#">#</button>
+                        <button class="key send" data-k="sendBtn">SEND</button>
+                        <button class="key" data-k="7">-</button>
+                        <button class="key clear" id="clearBtn">CLR</button>
+                    </div>
+            </div>
+
+        </div>
+        
+        <div class="side">
+            <h2>Try these inputs</h2>
+            <p>Dial <code>*384*69699#</code> to start, then use the menus. Every screen is real — it POSTs to the same endpoint Africa's Talking will call in production.</p>
+
+            <div class="quick-dial" onclick="quickDial('*384*69699#')">
+                <strong>*384*69699#</strong>
+                <p>Open main menu</p>
+            </div>
+            
+            <div class="quick-dial" onclick="quickDial('*384*69699#', ['2','5'])">
+                <strong>Menu → 2 → 5</strong>
+                <p>Mental health → self-harm thoughts (triggers escalation)</p>
+            </div>
+
+            <div class="quick-dial" onclick="quickDial('*384*69699#', ['1','1'])">
+                <strong>Menu → 1 → 1</strong>
+                <p>SRH → contraception info</p>
+            </div>
+
+            <div class="quick-dial" onclick="quickDial('*384*69699#', ['3'])">
+                <strong>Menu → 3</strong>
+                <p>Request a counselor callback</p>
+            </div>
+        
+            <div class="log" id="log"></div>
+
+        </div>
+
+    </body>
+</html>
