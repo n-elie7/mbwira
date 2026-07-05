@@ -75,7 +75,8 @@ async def _load_history(db: AsyncSession, session_pk: int, limit: int = 20) -> l
 @router.post("", response_model=ChatResponse)
 async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResponse:
     sess = await _load_session(db, req.session_id)
-    sess.language = req.language or "rw"
+    language = (req.language or "rw").strip().lower() 
+    sess.language = language
 
     # 1. Pre-check user message for crisis signals
     pre_signal = check_user_message(req.message)
@@ -108,7 +109,7 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
 
     # Append safety tail text if we have a reason
     if final_reason:
-        cleaned_reply = cleaned_reply + safety_response_text(final_reason, req.language)
+        cleaned_reply += safety_response_text(final_reason, language)
 
     # 5. Save assistant reply
     db.add(Message(
