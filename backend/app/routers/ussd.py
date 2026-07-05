@@ -88,5 +88,5 @@ async def ussd_callback(
 
     await db.commit()
 
-    body = f"{kind} {prompt}"
+    body = f"{kind} {prompt.strip()}"
     return Response(content=body, media_type="text/plain")
