@@ -69,7 +69,7 @@ async function onSend() {
       inputDisplay.textContent = "_";
     }
   } else {
-    // in session: dialBuffer is the next input
+    
     accumulatedInput = accumulatedInput
       ? accumulatedInput + "*" + dialBuffer
       : dialBuffer;
@@ -77,5 +77,36 @@ async function onSend() {
     inputDisplay.textContent = "_";
     const res = await callUssd();
     renderScreen(res);
+  }
+}
+
+document.querySelectorAll("[data-k]").forEach(b => {
+  b.addEventListener("click", () => {
+    dialBuffer += b.dataset.k;
+    inputDisplay.textContent = dialBuffer || "_";
+  });
+});
+
+
+document.getElementById("sendBtn").addEventListener("click", onSend);
+document.getElementById("clearBtn").addEventListener("click", () => {
+  dialBuffer = "";
+  inputDisplay.textContent = "_";
+});
+
+
+async function quickDial(code, followups = []) {
+  // Reset
+  dialBuffer = code;
+  inputDisplay.textContent = code;
+  inSession = false;
+  sessionId = "sim_" + Math.random().toString(36).slice(2, 10);
+  accumulatedInput = "";
+  await onSend();
+  for (const f of followups) {
+    await new Promise(r => setTimeout(r, 900));
+    dialBuffer = f;
+    inputDisplay.textContent = f;
+    await onSend();
   }
 }
