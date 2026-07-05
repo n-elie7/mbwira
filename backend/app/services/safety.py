@@ -11,6 +11,9 @@ LLM misses them, and the tag is there for cases the keyword filter can't see.
 import re
 from dataclasses import dataclass
 
+def _normalize(text: str) -> str:
+    return text.lower().strip()
+
 # Keywords are lowercase; we lowercase the input before checking.
 # This list is intentionally short and high-precision. Add more cautiously —
 # every false positive triggers a real human's time.
