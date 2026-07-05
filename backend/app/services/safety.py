@@ -60,7 +60,7 @@ def check_user_message(text: str) -> SafetySignal:
     """Keyword scan on incoming user messages."""
     if not text:
         return SafetySignal(False)
-    t = text.lower()
+    t = _normalize(text)
 
     for kw in SUICIDAL_KEYWORDS_EN + SUICIDAL_KEYWORDS_RW:
         if kw in t:
