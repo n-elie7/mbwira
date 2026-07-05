@@ -99,6 +99,10 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
         history.append({"role": "user", "content": req.message})
 
     reply_text = await ask_claude(history)
+    logger.info(
+    "Generated chat response for session %s",
+    req.session_id,
+)
 
     # 4. Post-check LLM output
     post_reason, cleaned_reply = extract_escalation_from_response(reply_text)
