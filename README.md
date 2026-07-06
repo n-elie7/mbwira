@@ -125,7 +125,8 @@ Either path triggers the same handoff flow.
 - Real Africa's Talking short-code (not sandbox)
 - Meta WhatsApp Business verification
 
-See [docs/SETUP.md](docs/SETUP.md) for the checklist.
+
+
 
 ---
 
