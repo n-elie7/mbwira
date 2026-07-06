@@ -64,24 +64,24 @@ def check_user_message(text: str) -> SafetySignal:
     """Keyword scan on incoming user messages."""
     if not text:
         return SafetySignal(False)
-    t = _normalize(text)
+    normalized_text = _normalize(text)
 
     for kw in SUICIDAL_KEYWORDS_EN + SUICIDAL_KEYWORDS_RW:
-        if kw in t:
+        if kw in normalized_text:
             return SafetySignal(True, "suicidal_ideation", kw)
 
     for kw in GBV_KEYWORDS_EN + GBV_KEYWORDS_RW:
-        if kw in t:
+        if kw in normalized_text:
             return SafetySignal(True, "gender_based_violence", kw)
 
     for kw in MEDICAL_EMERGENCY_EN + MEDICAL_EMERGENCY_RW:
-        if kw in t:
+        if kw in normalized_text:
             return SafetySignal(True, "medical_emergency", kw)
 
     for pattern in CHILD_SAFEGUARDING_PATTERNS:
-        m = re.search(pattern, t)
-        if m:
-            return SafetySignal(True, "child_safeguarding_age", m.group(0))
+        match = re.search(pattern, normalized_text)
+        if match:
+            return SafetySignal(True, "child_safeguarding_age", match.group(0))
 
     return SafetySignal(False)
 
