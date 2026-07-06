@@ -1,4 +1,5 @@
-"""Create escalations when a user needs human help."""
+"""Utilities for creating and tracking support escalations 
+This service ensures only one pending escalation exists for a session"""
 import logging
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,7 +17,7 @@ async def create_escalation(
     notes: str | None = None,
 ) -> Escalation:
     """Create or update an escalation for a session."""
-    # Idempotent: if already escalated with same reason, don't duplicate.
+    # if already escalated with same reason, don't duplicate.
     existing = await db.execute(
         select(Escalation).where(Escalation.session_id == session.id)
     )
