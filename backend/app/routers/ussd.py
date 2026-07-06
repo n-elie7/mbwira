@@ -30,6 +30,7 @@ def _hash_phone(phone: str) -> str:
 async def _get_or_create_session(
     db: AsyncSession, session_id: str, phone_hash: str, phone: str
 ) -> DBSession:
+#"""Retrieve an existing USSD session or create a new one.""""
     q = await db.execute(select(DBSession).where(DBSession.session_id == session_id))
     sess = q.scalar_one_or_none()
     if sess:
