@@ -2,7 +2,9 @@
     --clay: #C35A4E; --forest: #2D3D2E; --forest-dark: #1C271D;
     --cream: #F7F1E8; --cream-warm: #EFE5D2; --ink: #1A1A1A; --muted: #6B6258;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: 'Manrope', sans-serif;
     background: linear-gradient(180deg, #1a1a1a 0%, #2a2a2a 100%);
@@ -11,19 +13,28 @@
     display: flex; flex-direction: column;
     padding: 2rem 1rem;
   }
+
+  /* header container */
+
   .header {
     text-align: center;
     margin-bottom: 2rem;
     max-width: 500px;
     margin-left: auto; margin-right: auto;
   }
+
+
   .header h1 {
     font-family: 'Fraunces', serif;
     font-size: 1.5rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
   }
+
   .header p { color: rgba(247,241,232,0.6); font-size: 0.9rem; }
+  
+  /* layout container */
+  
   .layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -32,10 +43,12 @@
     margin: 0 auto;
     align-items: start;
   }
+
+
   @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } }
 
 
-  /* --- phone --- */
+  /*  phone */
   .phone-frame {
     background: #0f0f0f;
     border-radius: 36px;
@@ -49,11 +62,14 @@
     position: relative;
   }
 
+
   .phone-speaker {
     width: 60px; height: 6px;
     background: #333; border-radius: 3px;
     margin: 0 auto 16px;
   }
+
+
   .phone-screen {
     background: #C5D68E;
     background-image:
@@ -75,6 +91,8 @@
     position: relative;
     box-shadow: inset 0 2px 6px rgba(0,0,0,0.15);
   }
+
+
   .phone-screen .status {
     display: flex;
     justify-content: space-between;
@@ -84,9 +102,13 @@
     border-bottom: 1px dashed rgba(0,0,0,0.3);
     opacity: 0.7;
   }
+
+
   .phone-screen .content {
     font-size: 0.82rem;
   }
+
+
   .phone-screen .input-area {
     position: absolute;
     bottom: 0.8rem; left: 1rem; right: 1rem;
@@ -96,12 +118,16 @@
     font-size: 0.7rem;
     opacity: 0.6;
   }
+
+
   .keypad {
     margin-top: 20px;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
   }
+
+
   .key {
     aspect-ratio: 1.5 / 1;
     background: #1a1a1a;
@@ -118,34 +144,84 @@
     justify-content: center;
     box-shadow: 0 2px 0 #000;
   }
+
+
   .key:active {
     transform: translateY(2px);
     box-shadow: 0 0 0 #000;
   }
+
   .key.send {
     background: var(--forest);
     grid-column: 1; grid-row: 5;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
   }
+
+
   .key.clear {
     background: var(--clay);
     grid-column: 3; grid-row: 5;
     font-size: 0.75rem;
     letter-spacing: 0.05em;
   }
+
   .key.hash, .key.star { font-family: monospace; font-size: 2rem; }
 
-  
-/* --- side panel --- */
+
+/* side panel  */
   .side {
     padding: 1rem;
   }
+
   .side h2 {
     font-family: 'Fraunces', serif;
     font-size: 1.3rem;
     margin-bottom: 1rem;
     color: var(--cream);
   }
+
   .side p { color: rgba(247,241,232,0.7); margin-bottom: 1.5rem; line-height: 1.6; font-size: 0.92rem; }
 
+  
+  /* the quick dial section */
+  .quick-dial {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+
+  .quick-dial strong {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--clay);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+  }
+
+
+  .quick-dial p { margin: 0; font-size: 0.85rem; color: rgba(247,241,232,0.6); }
+
+  
+  /*log section */
+  .log {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: rgba(247,241,232,0.4);
+    padding: 1rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 1rem;
+  }
+
+
+  .log div { margin-bottom: 0.3rem; }
+
+  .log .req { color: #8bbbe8; }
+
+  .log .res { color: #c5d68e; }
