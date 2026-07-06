@@ -59,6 +59,7 @@ async def _load_session(db: AsyncSession, session_id: str) -> DBSession:
 
 
 async def _load_history(db: AsyncSession, session_pk: int, limit: int = 20) -> list[dict]:
+    """Return recent conversation history in chronological order."""
     q = await db.execute(
         select(Message)
         .where(Message.session_id == session_pk)
