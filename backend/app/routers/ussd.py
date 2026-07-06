@@ -22,12 +22,15 @@ router = APIRouter(prefix="/ussd", tags=["ussd"])
 
 
 def _hash_phone(phone: str) -> str:
+    """Return a SHA-256 hash of the phone number for privacy."""
     return hashlib.sha256(phone.encode("utf-8")).hexdigest()
+
 
 
 async def _get_or_create_session(
     db: AsyncSession, session_id: str, phone_hash: str, phone: str
 ) -> DBSession:
+    #Retrieve an existing USSD session or create a new one
     q = await db.execute(select(DBSession).where(DBSession.session_id == session_id))
     sess = q.scalar_one_or_none()
     if sess:
@@ -60,12 +63,12 @@ async def ussd_callback(
 )
     db_session = await _get_or_create_session(db, sessionId, phone_hash, phoneNumber)
 
-    # Walk the tree based on accumulated input
+    # Determine the next screen by following the user's input path
     state, screen = walk_tree(text, lang="rw")  # default Kinyarwanda
     prompt = screen["prompt"]
     kind = screen["type"]  # 'CON' or 'END'
 
-    # Log the final interaction for auditing
+    # Store the user's request and the generated response
     db.add(Message(
         session_id=db_session.id,
         role="user",
@@ -78,7 +81,7 @@ async def ussd_callback(
     ))
     db_session.topic = state
 
-    # Trigger escalation if this screen requests it
+    # Some screens require follow-up from a counselor
     escalation_reason = screen.get("triggers_escalation")
     if escalation_reason:
         await create_escalation(
