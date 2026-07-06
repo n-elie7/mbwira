@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import uuid
 
 from sqlalchemy import String, DateTime, Text, ForeignKey
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from app.config import settings
@@ -25,6 +26,9 @@ class Session(Base):
     expires_at: Mapped[datetime] = mapped_column(
         DateTime, default=lambda: datetime.utcnow() + timedelta(hours=24)
     )
+    messages: Mapped[list["Message"]] = relationship(back_populates="session")
+
+
 class Message(Base):
     """A single chat message, tied only to a session token — never to a person."""
     __tablename__ = "messages"
@@ -37,7 +41,9 @@ class Message(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     session: Mapped["Session"] = relationship(back_populates="messages")
-    class Referral(Base):
+
+
+class Referral(Base):
     """Real-world help resources (e.g. Isange One Stop Centres, hotlines)."""
     __tablename__ = "referrals"
 
@@ -47,8 +53,11 @@ class Message(Base):
     name: Mapped[str] = mapped_column(String(120))
     contact_info: Mapped[str] = mapped_column(String(200))
     description: Mapped[str | None] = mapped_column(Text)
-    engine = create_async_engine(settings.database_url, echo=False)
-    AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+# --- Engine and session factory setup ---
+engine = create_async_engine(settings.database_url, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_db() -> AsyncSession:
@@ -59,5 +68,3 @@ async def get_db() -> AsyncSession:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-
-
