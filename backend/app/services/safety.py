@@ -1,13 +1,13 @@
 """
-Safety layer — detect crisis signals before AND after the LLM responds.
+Safety utilities for detecting high-risk situations
 
-Two checks:
-1. Keyword pre-filter on user input (fast, deterministic, always runs)
-2. Post-filter on LLM output for the [ESCALATE: ...] tag
+The service performs two checks:
+1. Scan the user's message for crisis keywords
+2. Inspect the LLM response for escalation tags
 
-This is defense-in-depth: the keyword filter catches obvious signals even if the
-LLM misses them, and the tag is there for cases the keyword filter can't see.
+Using both checks helps reduce missed emergencies
 """
+
 import re
 from dataclasses import dataclass
 
