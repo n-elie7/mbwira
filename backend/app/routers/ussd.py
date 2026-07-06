@@ -22,7 +22,9 @@ router = APIRouter(prefix="/ussd", tags=["ussd"])
 
 
 def _hash_phone(phone: str) -> str:
+    """Return a SHA-256 hash of the phone number for privacy."""
     return hashlib.sha256(phone.encode("utf-8")).hexdigest()
+
 
 
 async def _get_or_create_session(
