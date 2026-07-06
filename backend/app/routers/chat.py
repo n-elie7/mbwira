@@ -80,10 +80,10 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     language = (req.language or "rw").strip().lower() 
     sess.language = language
 
-    # 1. Pre-check user message for crisis signals
+    # 1. Check the user's message before sending it to the language model
     pre_signal = check_user_message(req.message)
 
-    # 2. Persist user message
+    # 2. Save the user's message for future reference
     user_msg = Message(
         session_id=sess.id,
         role="user",
@@ -94,7 +94,7 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     db.add(user_msg)
     await db.commit()
 
-    # 3. Build conversation history and ask Claude
+    # 3. Rebuild recent conversation context before generating a reply
     history = await _load_history(db, sess.id)
     # Add current user message (it's already saved, but ensure it's in the history)
     if not history or history[-1]["role"] != "user":
@@ -106,7 +106,7 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     req.session_id,
 )
 
-    # 4. Post-check LLM output
+    # 4. Inspect the generated response for escalation tags
     post_reason, cleaned_reply = extract_escalation_from_response(reply_text)
 
     # Combine pre and post signals
@@ -117,7 +117,7 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     if final_reason:
         cleaned_reply += safety_response_text(final_reason, language)
 
-    # 5. Save assistant reply
+    # 5. Store the assistant response in the conversation history.
     db.add(Message(
         session_id=sess.id,
         role="assistant",
@@ -127,7 +127,7 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     ))
     await db.commit()
 
-    # 6. Create escalation if needed
+    # 6.Create an escalation record whenever intervention is required.
     if escalated:
         await create_escalation(
             db, sess, reason=final_reason or "unknown",
