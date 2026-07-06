@@ -12,7 +12,8 @@ import re
 from dataclasses import dataclass
 
 def _normalize(text: str) -> str:
-    return text.lower().strip()
+    """Normalize user text before keyword matching."""
+    return text.strip().lower()
 
 # Keywords are lowercase; we lowercase the input before checking.
 # This list is intentionally short and high-precision. Add more cautiously —
