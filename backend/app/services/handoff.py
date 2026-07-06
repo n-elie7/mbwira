@@ -16,7 +16,8 @@ async def create_escalation(
     level: str = "counselor",
     notes: str | None = None,
 ) -> Escalation:
-    """Create or update an escalation for a session."""
+    """Create a new escalation when needed
+    If a pending escalation already exists, return it instead of creating a duplicate record."""
     # if already escalated with same reason, don't duplicate.
     existing = await db.execute(
         select(Escalation).where(Escalation.session_id == session.id)
