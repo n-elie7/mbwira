@@ -52,18 +52,6 @@ class Message(Base):
     session: Mapped["Session"] = relationship(back_populates="messages")
 
 
-class Referral(Base):
-    """Real-world help resources (e.g. Isange One Stop Centres, hotlines)."""
-    __tablename__ = "referrals"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    category: Mapped[str] = mapped_column(String(30))
-    region: Mapped[str | None] = mapped_column(String(50))
-    name: Mapped[str] = mapped_column(String(120))
-    contact_info: Mapped[str] = mapped_column(String(200))
-    description: Mapped[str | None] = mapped_column(Text)
-
-
 class Escalation(Base):
     """When a user needs a human — counselor, CHW, or emergency services."""
     __tablename__ = "escalations"
@@ -77,3 +65,15 @@ class Escalation(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+engine = create_async_engine(settings.database_url, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
