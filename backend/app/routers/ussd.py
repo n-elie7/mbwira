@@ -54,6 +54,10 @@ async def ussd_callback(
     db: AsyncSession = Depends(get_db),
 ) -> Response:
     phone_hash = _hash_phone(phoneNumber) if phoneNumber else ""
+    logger.info(
+    "Incoming USSD session %s",
+    sessionId,
+)
     db_session = await _get_or_create_session(db, sessionId, phone_hash, phoneNumber)
 
     # Walk the tree based on accumulated input
@@ -84,5 +88,5 @@ async def ussd_callback(
 
     await db.commit()
 
-    body = f"{kind} {prompt}"
+    body = f"{kind} {prompt.strip()}"
     return Response(content=body, media_type="text/plain")

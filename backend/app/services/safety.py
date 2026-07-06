@@ -11,6 +11,9 @@ LLM misses them, and the tag is there for cases the keyword filter can't see.
 import re
 from dataclasses import dataclass
 
+def _normalize(text: str) -> str:
+    return text.lower().strip()
+
 # Keywords are lowercase; we lowercase the input before checking.
 # This list is intentionally short and high-precision. Add more cautiously —
 # every false positive triggers a real human's time.
@@ -60,7 +63,7 @@ def check_user_message(text: str) -> SafetySignal:
     """Keyword scan on incoming user messages."""
     if not text:
         return SafetySignal(False)
-    t = text.lower()
+    t = _normalize(text)
 
     for kw in SUICIDAL_KEYWORDS_EN + SUICIDAL_KEYWORDS_RW:
         if kw in t:
@@ -68,7 +71,7 @@ def check_user_message(text: str) -> SafetySignal:
 
     for kw in GBV_KEYWORDS_EN + GBV_KEYWORDS_RW:
         if kw in t:
-            return SafetySignal(True, "gender_based_violance", kw)
+            return SafetySignal(True, "gender_based_violence", kw)
 
     for kw in MEDICAL_EMERGENCY_EN + MEDICAL_EMERGENCY_RW:
         if kw in t:
@@ -109,7 +112,7 @@ def safety_response_text(reason: str, lang: str = "rw") -> str:
             "\n\nYou matter. Please call 114 now — free and confidential. "
             "A counselor will also reach out within 24 hours."
         )
-    if reason == "gender_based_violance":
+    if reason == "gender_based_violence":
         if lang == "rw":
             return (
                 "\n\nUri mu mutekano wo gushaka ubufasha. Hamagara Isange 3029 "
