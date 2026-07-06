@@ -63,12 +63,12 @@ async def ussd_callback(
 )
     db_session = await _get_or_create_session(db, sessionId, phone_hash, phoneNumber)
 
-    # Walk the tree based on accumulated input
+    # Determine the next screen by following the user's input path
     state, screen = walk_tree(text, lang="rw")  # default Kinyarwanda
     prompt = screen["prompt"]
     kind = screen["type"]  # 'CON' or 'END'
 
-    # Log the final interaction for auditing
+    # Store the user's request and the generated response
     db.add(Message(
         session_id=db_session.id,
         role="user",
@@ -81,7 +81,7 @@ async def ussd_callback(
     ))
     db_session.topic = state
 
-    # Trigger escalation if this screen requests it
+    # Some screens require follow-up from a counselor
     escalation_reason = screen.get("triggers_escalation")
     if escalation_reason:
         await create_escalation(
