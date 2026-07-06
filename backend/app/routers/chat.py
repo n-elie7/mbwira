@@ -50,6 +50,7 @@ async def new_session(db: AsyncSession = Depends(get_db)) -> NewSessionResponse:
 
 
 async def _load_session(db: AsyncSession, session_id: str) -> DBSession:
+    """Load a chat session from the database."""
     q = await db.execute(select(DBSession).where(DBSession.session_id == session_id))
     sess = q.scalar_one_or_none()
     if not sess:
