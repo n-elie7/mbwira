@@ -23,7 +23,7 @@
                         <div class="content" id="screenContent">Press *384*69699# SEND to start</div>
                         <div class="input-area"><span id="inputDisplay">_</span><span>OPTIONS</span></div>
                     </div>
-                    <div class="phone-frame">
+                    <div class="keypad">
                         <button class="key" data-k="1">1</button>
                         <button class="key" data-k="2">2</button>
                         <button class="key" data-k="3">3</button>
@@ -36,17 +36,18 @@
                         <button class="key start" data-k="*">*</button>
                         <button class="key" data-k="0">0</button>
                         <button class="key hash" data-k="#">#</button>
-                        <button class="key send" data-k="sendBtn">SEND</button>
+                        <button class="key send" id="sendBtn">SEND</button>
                         <button class="key" data-k="7">-</button>
                         <button class="key clear" id="clearBtn">CLR</button>
                     </div>
+                    
             </div>
 
         </div>
         
         <div class="side">
             <h2>Try these inputs</h2>
-            <p>Dial <code>*384*69699#</code> to start, then use the menus. Every screen is real — it POSTs to the same endpoint Africa's Talking will call in production.</p>
+            <p>Dial <code>*384*69699#</code> to start, then use the menus. Every screen is real, it POSTs to the same endpoint Africa's Talking will call in production.</p>
 
             <div class="quick-dial" onclick="quickDial('*384*69699#')">
                 <strong>*384*69699#</strong>
