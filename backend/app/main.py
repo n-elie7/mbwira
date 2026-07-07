@@ -1,4 +1,4 @@
-"""Mbwira — FastAPI entry point."""
+"""Mbwira FastAPI entry point."""
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -52,6 +52,11 @@ async def healthz():
 # minamal frontend wiring
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
+@app.get("/chat")
+async def chat_ui():
+    return FileResponse(FRONTEND_DIR / "chat.html")
+
+
 if FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
@@ -59,10 +64,7 @@ if FRONTEND_DIR.exists():
     async def index():
         return FileResponse(FRONTEND_DIR / "index.html")
     
-    @app.get("/chat")
-    async def chat_ui():
-        return FileResponse(FRONTEND_DIR / "chat.html")
-
     @app.get("/ussd")
     async def ussd_sim():
         return FileResponse(FRONTEND_DIR / "ussd")
+    
