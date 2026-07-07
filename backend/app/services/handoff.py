@@ -23,12 +23,12 @@ async def create_escalation(
         select(Escalation).where(Escalation.session_id == session.id)
     )
     existing = existing.scalar_one_or_none()
-if existing and existing.status == "pending":
-    logger.info(
-        "Escalation already pending for session %s",
-        session.session_id,
-    )
-    return existing
+    if existing and existing.status == "pending":
+        logger.info(
+            "Escalation already pending for session %s",
+            session.session_token,
+        )
+        return existing
 
     escalation = Escalation(
         session_id=session.id,
@@ -44,6 +44,6 @@ if existing and existing.status == "pending":
     await db.refresh(session)
     logger.warning(
         "Escalation created: session=%s reason=%s level=%s",
-        session.session_id, reason, level,
+        session.session_token, reason, level,
     )
     return escalation
