@@ -58,6 +58,10 @@ if FRONTEND_DIR.exists():
     @app.get("/")
     async def index():
         return FileResponse(FRONTEND_DIR / "index.html")
+    
+    @app.get("/chat")
+    async def chat_ui():
+        return FileResponse(FRONTEND_DIR / "chat.html")
 
     @app.get("/ussd")
     async def ussd_sim():
