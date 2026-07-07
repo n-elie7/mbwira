@@ -49,7 +49,7 @@ app.include_router(chat.router)
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
 if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 
     @app.get("/")
     async def index():
