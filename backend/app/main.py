@@ -45,6 +45,10 @@ app.include_router(ussd.router)
 app.include_router(chat.router)
 
 
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok", "service": "mbwira"}
+
 # minamal frontend wiring
 FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / "frontend"
 
@@ -58,8 +62,3 @@ if FRONTEND_DIR.exists():
     @app.get("/ussd")
     async def ussd_sim():
         return FileResponse(FRONTEND_DIR / "ussd")
-
-
-@app.get("/healthz")
-async def healthz():
-    return {"status": "ok", "service": "mbwira"}
