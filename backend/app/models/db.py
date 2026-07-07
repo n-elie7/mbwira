@@ -1,6 +1,5 @@
-"""Database models. Keep data minimal — anonymity is the core design constraint."""
+"""Database models. Keeping data minimal anonymity is the core design constraint."""
 from datetime import datetime, timedelta
-import uuid
 
 from sqlalchemy import String, DateTime, Text, ForeignKey, Boolean
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -18,12 +17,11 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    session_token: Mapped[str] = mapped_column(
-        String(36), unique=True, index=True, default=lambda: str(uuid.uuid4())
-    )
-    channel: Mapped[str] = mapped_column(String(16), default="web")  # 'ussd' | 'whatsapp' | 'web'
+    session_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    channel: Mapped[str] = mapped_column(String(16))
+    phone_hash: Mapped[str | None] = mapped_column(String(128), nullable=True)
     language: Mapped[str] = mapped_column(String(8), default="rw")  # 'rw' | 'en'
-    category: Mapped[str | None] = mapped_column(String(30))
+    topic: Mapped[str | None] = mapped_column(String(32), nullable=True)
     escalated: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
@@ -42,26 +40,14 @@ class Message(Base):
     __tablename__ = "messages"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id", ondelete="CASCADE"), index=True)
-    sender: Mapped[str] = mapped_column(String(10))
+    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id"), index=True)
+    role: Mapped[str] = mapped_column(String(16))
     content: Mapped[str] = mapped_column(Text)
     flagged: Mapped[bool] = mapped_column(Boolean, default=False)
     flag_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
-    session: Mapped["Session"] = relationship(back_populates="messages")
-
-
-class Referral(Base):
-    """Real-world help resources (e.g. Isange One Stop Centres, hotlines)."""
-    __tablename__ = "referrals"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    category: Mapped[str] = mapped_column(String(30))
-    region: Mapped[str | None] = mapped_column(String(50))
-    name: Mapped[str] = mapped_column(String(120))
-    contact_info: Mapped[str] = mapped_column(String(200))
-    description: Mapped[str | None] = mapped_column(Text)
+    session: Mapped[Session] = relationship(back_populates="messages")
 
 
 class Escalation(Base):
@@ -77,3 +63,32 @@ class Escalation(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    session: Mapped[Session] = relationship(back_populates="escalation")
+    counselor: Mapped["Counselor | None"] = relationship()
+
+
+class Counselor(Base):
+    """A human counselor who can take over escalated sessions."""
+    __tablename__ = "counselors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(128))
+    credentials: Mapped[str] = mapped_column(String(255))
+    specialty: Mapped[str] = mapped_column(String(64))  # 'srh' | 'mental_health' | 'both'
+    phone: Mapped[str] = mapped_column(String(32))
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+engine = create_async_engine(settings.database_url, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
