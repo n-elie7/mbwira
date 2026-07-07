@@ -1,136 +1,102 @@
 # Mbwira
 
-**"Talk to me"** an anonymous digital support system for people in Rwanda dealing with stigmatized issues: mental health, gender-based violence (GBV), substance abuse, and unwanted pregnancies.
+Mbwira is a privacy-first support prototype for people in Rwanda who may need help with sensitive topics such as mental health, gender-based violence, substance use, and unwanted pregnancies.
 
-Mbwira lets users type free-text problems, receive empathetic guidance via an LLM conversational layer, and get routed to real-world resources (like Isange One Stop Centres) without exposing their identity.
+The project combines a lightweight web chat experience with a USSD-style flow so users can describe their concerns in plain language and receive compassionate, guided support without exposing their identity.
 
-## Team Roles
-- **Database Architect / Backend Engineer**: anonymous database design, APIs, referral routing
-- **Lead Developer / AI Integrator**: LLM conversational layer, prompt safety, chat logic
-- **UI/UX Developer**: chat interface and admin dashboard
+## What the project includes
 
+- A chat endpoint for anonymous conversations in [backend/app/routers/chat.py](backend/app/routers/chat.py)
+- A USSD-style callback handler in [backend/app/routers/ussd.py](backend/app/routers/ussd.py)
+- Safety scanning and escalation logic in [backend/app/services/safety.py](backend/app/services/safety.py) and [backend/app/services/handoff.py](backend/app/services/handoff.py)
+- LLM integration in [backend/app/services/llm.py](backend/app/services/llm.py)
+- Session, message, referral, and escalation persistence in [backend/app/models/db.py](backend/app/models/db.py)
+- A static landing page and browser-based USSD simulator in [frontend/index.html](frontend/index.html) and [frontend/ussd/ussd_simulator.html](frontend/ussd/ussd_simulator.html)
 
----
+## Repository structure
 
-## What's in the box
-
-```
+```text
 mbwira/
 ├── backend/
+│   ├── .env.example
+│   ├── requirements.txt
 │   └── app/
-│       ├── main.py                  # FastAPI entry point
-│       ├── config.py                # env-based settings
-│       ├── routers/
-│       │   ├── ussd.py              # Africa's Talking USSD webhook
-│       │   ├── whatsapp.py          # Meta WhatsApp webhook
-│       │   ├── chat.py              # web chat API
-│       │   └── counselor.py         # counselor dashboard API
-│       ├── services/
-│       │   ├── llm.py               # Claude API wrapper
-│       │   ├── safety.py            # crisis keyword + escalation detection
-│       │   └── handoff.py           # creates Escalation records
+│       ├── config.py
 │       ├── content/
-│       │   ├── ussd_tree.py         # bilingual menu tree (Kinyarwanda/English)
-│       │   └── system_prompt.py     # Claude instructions for WhatsApp/web
-│       └── models/db.py             # SQLAlchemy models (Session, Message, Escalation)
+│       │   └── system_prompt.py
+│       ├── models/
+│       │   └── db.py
+│       ├── routers/
+│       │   ├── chat.py
+│       │   └── ussd.py
+│       └── services/
+│           ├── handoff.py
+│           ├── llm.py
+│           └── safety.py
 ├── frontend/
-│   ├── index.html                   # public landing page
-│   ├── chat.html                    # web chat demo
-│   ├── ussd_simulator.html          # browser-based USSD phone simulator
-│   └── counselor.html               # counselor dashboard
-└── docs/
-    ├── ARCHITECTURE.md
-    ├── PITCH.md
-    └── SETUP.md
+│   ├── index.html
+│   ├── style.
+|   ├── chat.html
+│   └── ussd/
+│       ├── ussd_simulator.html
+│       ├── ussd_simulator.css
+│       └── ussd_simulator.js
+└── README.md
 ```
 
----
+## How the current implementation works
 
-## Quickstart (local, ~5 minutes)
+### Chat flow
+
+The chat route in [backend/app/routers/chat.py](backend/app/routers/chat.py) accepts a session ID and a message, loads recent history, sends the conversation to the LLM layer, and stores the output. Before and after generation, the message is checked for high-risk signals.
+
+### USSD flow
+
+The USSD handler in [backend/app/routers/ussd.py](backend/app/routers/ussd.py) receives form fields such as `sessionId`, `serviceCode`, `phoneNumber`, and `text`. It creates or loads a session, follows the menu logic, and returns a plain-text response suitable for a feature-phone experience.
+
+### Safety and escalation
+
+The safety layer in [backend/app/services/safety.py](backend/app/services/safety.py) scans incoming messages for keywords and patterns in English and Kinyarwanda. It also inspects LLM output for escalation markers such as `[ESCALATE: reason]`. When a risk signal is detected, [backend/app/services/handoff.py](backend/app/services/handoff.py) creates an escalation record for follow-up.
+
+## Setup
+
+1. Move into the backend folder.
+2. Create and activate a Python virtual environment.
+3. Install the dependencies from [backend/requirements.txt](backend/requirements.txt).
+4. Copy [backend/.env.example](backend/.env.example) to `.env` and fill in the values.
+
+Example:
 
 ```bash
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate   # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# edit .env — at minimum set ANTHROPIC_API_KEY
-uvicorn app.main:app --reload --port 8000
 ```
 
-Then open:
-- **http://localhost:8000** — landing page
-- **http://localhost:8000/ussd-sim** — USSD simulator (best demo for judges)
-- **http://localhost:8000/chat-ui** — web chat
-- **http://localhost:8000/dashboard** — counselor dashboard (password from `.env`)
-- **http://localhost:8000/docs** — auto-generated API docs
+At minimum, configure the environment values for the LLM provider and database connection.
 
----
+## Demo and testing
 
-## How each channel works
+A simple way to explore the prototype is:
 
-### USSD (`POST /ussd`)
-Africa's Talking sends `sessionId`, `serviceCode`, `phoneNumber`, `text`. We walk the decision tree in `content/ussd_tree.py` and return `"CON ..."` or `"END ..."`. Screens that represent crisis moments (e.g. `mh_suicidal`) automatically create an `Escalation` record.
+1. Open [frontend/index.html](frontend/index.html) for the landing page.
+2. Open [frontend/ussd/ussd_simulator.html](frontend/ussd/ussd_simulator.html) to try the USSD simulator.
+3. Exercise the chat route with a session created from the chat endpoint and test safety scenarios in both English and Kinyarwanda.
 
-### WhatsApp (`POST /whatsapp`)
-Meta Cloud API webhook. Incoming text goes through the pre-safety-filter → Claude → post-safety-filter → persistence → reply via Meta's send-message API. Session keyed by hashed phone number so conversations continue.
+## Tech choices
 
-### Web chat (`POST /chat`)
-Same pipeline as WhatsApp, but with an explicit `session_id` issued by `GET /chat/new`. Used by the frontend and for testing.
+- Python with an async-friendly backend structure
+- SQLAlchemy for persistence
+- LLM-based conversational support
+- Static HTML/CSS/JavaScript for the demo frontend
+- Environment-based configuration for API keys and database settings
 
-### Counselor dashboard
-Password-protected endpoints under `/counselor/*`. Lists pending escalations, shows full conversation history, lets a counselor mark resolved with notes.
+## Notes
 
----
+This repository is an early-stage prototype rather than a fully production-ready service. It is useful for demonstrations, testing, and iteration, but it should be reviewed carefully before any real-world deployment.
 
-## The safety model
+## License and context
 
-Two-layer defense so no crisis signal is missed:
-
-1. **Pre-filter** (`services/safety.py`) — keyword + regex scan of the incoming user message. Catches obvious signals (suicide, GBV, medical emergency) in Kinyarwanda and English.
-2. **Post-filter** — Claude's system prompt requires it to prefix urgent responses with `[ESCALATE: reason]`. We extract that tag before sending the reply and create an escalation.
-
-Either path triggers the same handoff flow.
-
----
-
-## What judges should test
-
-1. **USSD simulator** — click the "Menu → 2 → 5" quick-dial to see the self-harm escalation flow.
-2. **Web chat** — try: "I think I want to end my life" (English) or "ndashaka kwiyahura" (Kinyarwanda). Watch it escalate.
-3. **Counselor dashboard** — log in, see the escalation appear in real time, open it, read the transcript, resolve it.
-
----
-
-## Tech choices and why
-
-| Choice                   | Why                                                           |
-|--------------------------|---------------------------------------------------------------|
-| FastAPI                  | Fast to build, async for chat, great OpenAPI docs             |
-| SQLite (dev) / Postgres  | Zero-config for MVP, clean upgrade path to Supabase/RDS       |
-| Claude API               | Best Kinyarwanda handling among major LLMs; strong safety     |
-| Africa's Talking         | Rwanda coverage, sandbox is free, same API for USSD+SMS       |
-| Meta WhatsApp Cloud API  | Official, reliable, free for incoming                         |
-| Vanilla HTML/CSS/JS      | Small surface for a demo, fast to load on 2G/3G               |
-
----
-
-## What this is NOT (yet)
-
-
-- Native-speaker clinical review of all Kinyarwanda content
-- Licensed clinical advisor(s) on-call for escalations
-- Signed data-processing agreement with MoH / RBC
-- Rwandan data protection law (Law N° 058/2021) compliance review
-- Penetration test of the counselor dashboard
-- Real Africa's Talking short-code (not sandbox)
-- Meta WhatsApp Business verification
-
-
-
-
----
-
-## License & Contact
-
-Built by Niyubwayo Irakoze Elie & Ikuzwe Jean Lewis for the iAccelerator 2026 competition.
-All content drafts require clinical review before live deployment.
+Built as a social-impact prototype focused on privacy, safety, and access to support in Rwanda. All content and escalation behavior should be reviewed carefully before deployment.
