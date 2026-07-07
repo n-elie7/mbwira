@@ -26,7 +26,7 @@ async def create_escalation(
     if existing and existing.status == "pending":
         logger.info(
             "Escalation already pending for session %s",
-            session.session_token,
+            session.session_id,
         )
         return existing
 
@@ -44,6 +44,6 @@ async def create_escalation(
     await db.refresh(session)
     logger.warning(
         "Escalation created: session=%s reason=%s level=%s",
-        session.session_token, reason, level,
+        session.session_id, reason, level,
     )
     return escalation
