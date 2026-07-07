@@ -57,7 +57,7 @@ if FRONTEND_DIR.exists():
 
     @app.get("/ussd")
     async def ussd_sim():
-        return FileResponse(FRONTEND_DIR / "ussd_simulator.html")
+        return FileResponse(FRONTEND_DIR / "ussd/ussd_simulator.html")
 
 
 @app.get("/healthz")
