@@ -94,3 +94,68 @@ async def list_escalations(
 
     return out
 
+@router.get(
+    "/escalations/{escalation_id}/messages",
+    response_model=list[MessageOut],
+)
+async def get_messages(
+    escalation_id: int,
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(
+        select(Escalation).where(Escalation.id == escalation_id)
+    )
+
+    esc = q.scalar_one_or_none()
+
+    if not esc:
+        raise HTTPException(404, "Not found")
+
+    messages = await db.execute(
+        select(Message)
+        .where(Message.session_id == esc.session_id)
+        .order_by(Message.created_at.asc())
+    )
+
+    return [
+        MessageOut(
+            role=msg.role,
+            content=msg.content,
+            flagged=msg.flagged,
+            flag_reason=msg.flag_reason,
+            created_at=msg.created_at,
+        )
+        for msg in messages.scalars()
+    ]
+
+
+@router.post("/escalations/{escalation_id}/resolve")
+async def resolve_escalation(
+    escalation_id: int,
+    body: ResolveRequest,
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(
+        select(Escalation).where(Escalation.id == escalation_id)
+    )
+
+    esc = q.scalar_one_or_none()
+
+    if not esc:
+        raise HTTPException(404, "Not found")
+
+    esc.status = "resolved"
+    esc.resolved_at = datetime.utcnow()
+
+    if body.notes:
+        esc.notes = (esc.notes or "") + f"\n[resolved] {body.notes}"
+
+    await db.commit()
+
+    return {"ok": True}
