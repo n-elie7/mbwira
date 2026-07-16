@@ -159,3 +159,45 @@ async def resolve_escalation(
     await db.commit()
 
     return {"ok": True}
+
+@router.get("/stats")
+async def stats(
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_auth(x_dashboard_password)
+
+    total_sessions = (
+        await db.execute(select(Session))
+    ).scalars().all()
+
+    total_escalations = (
+        await db.execute(select(Escalation))
+    ).scalars().all()
+
+    pending = [
+        e for e in total_escalations
+        if e.status == "pending"
+    ]
+
+    by_channel = {}
+
+    for session in total_sessions:
+        by_channel[session.channel] = (
+            by_channel.get(session.channel, 0) + 1
+        )
+
+    by_reason = {}
+
+    for escalation in total_escalations:
+        by_reason[escalation.reason] = (
+            by_reason.get(escalation.reason, 0) + 1
+        )
+
+    return {
+        "sessions_total": len(total_sessions),
+        "sessions_by_channel": by_channel,
+        "escalations_total": len(total_escalations),
+        "escalations_pending": len(pending),
+        "escalations_by_reason": by_reason,
+    }
