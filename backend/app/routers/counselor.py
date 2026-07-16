@@ -54,3 +54,43 @@ class ResolveRequest(BaseModel):
     notes: str | None = None
 
 
+@router.get("/escalations", response_model=list[EscalationOut])
+async def list_escalations(
+    status: str = "pending",
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(
+        select(Escalation)
+        .options(selectinload(Escalation.session).selectinload(Session.messages))
+        .where(Escalation.status == status)
+        .order_by(desc(Escalation.created_at))
+        .limit(100)
+    )
+
+    out = []
+    now = datetime.utcnow()
+
+    for esc in q.scalars():
+        age = int((now - esc.created_at).total_seconds() / 60)
+
+        out.append(
+            EscalationOut(
+                id=esc.id,
+                session_id=esc.session.session_id,
+                channel=esc.session.channel,
+                reason=esc.reason,
+                level=esc.level,
+                status=esc.status,
+                notes=esc.notes,
+                created_at=esc.created_at,
+                message_count=len(esc.session.messages),
+                contact_available=bool(esc.session.contact_number),
+                age_minutes=age,
+            )
+        )
+
+    return out
+
