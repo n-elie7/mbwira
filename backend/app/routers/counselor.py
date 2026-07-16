@@ -201,3 +201,128 @@ async def stats(
         "escalations_pending": len(pending),
         "escalations_by_reason": by_reason,
     }
+
+# -------- Callback actions --------
+
+class RevealContactRequest(BaseModel):
+    reason: str
+
+
+@router.post(
+    "/escalations/{escalation_id}/reveal-contact"
+)
+async def reveal_contact(
+    escalation_id: int,
+    body: RevealContactRequest,
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Reveal the user's phone number to the counselor.
+    The action is recorded for auditing.
+    """
+
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(
+        select(Escalation)
+        .options(selectinload(Escalation.session))
+        .where(Escalation.id == escalation_id)
+    )
+
+    esc = q.scalar_one_or_none()
+
+    if not esc:
+        raise HTTPException(404, "Not found")
+
+    if not esc.session.contact_number:
+        raise HTTPException(
+            404,
+            "No contact number on file for this session.",
+        )
+
+    db.add(
+        Message(
+            session_id=esc.session.id,
+            role="system",
+            content=(
+                "[AUDIT] Contact number revealed to counselor. "
+                f"Reason: {body.reason}"
+            ),
+            flagged=False,
+        )
+    )
+
+    if esc.status == "pending":
+        esc.status = "taken"
+
+    await db.commit()
+
+    return {
+        "contact_number": esc.session.contact_number,
+        "channel": esc.session.channel,
+    }
+
+
+class SendOutboundMessage(BaseModel):
+    text: str
+
+
+@router.post(
+    "/escalations/{escalation_id}/send-message"
+)
+async def send_outbound_message(
+    escalation_id: int,
+    body: SendOutboundMessage,
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Send WhatsApp message from counselor dashboard.
+    """
+
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(
+        select(Escalation)
+        .options(selectinload(Escalation.session))
+        .where(Escalation.id == escalation_id)
+    )
+
+    esc = q.scalar_one_or_none()
+
+    if not esc:
+        raise HTTPException(404, "Not found")
+
+    sess = esc.session
+
+    if sess.channel != "whatsapp" or not sess.contact_number:
+        raise HTTPException(
+            400,
+            "Outbound messaging only supported for WhatsApp "
+            "sessions with a known number.",
+        )
+
+    from app.routers.whatsapp import _send_whatsapp
+
+    await _send_whatsapp(
+        sess.contact_number,
+        body.text,
+    )
+
+    db.add(
+        Message(
+            session_id=sess.id,
+            role="assistant",
+            content=f"[COUNSELOR] {body.text}",
+            flagged=False,
+        )
+    )
+
+    if esc.status == "pending":
+        esc.status = "taken"
+
+    await db.commit()
+
+    return {"ok": True}
+
