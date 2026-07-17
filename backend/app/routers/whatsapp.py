@@ -19,6 +19,7 @@ from app.services.handoff import create_escalation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
+WHATSAPP_API_URL = "https://graph.facebook.com/v25.0"
 
 
 def _hash_phone(phone: str) -> str:
