@@ -11,6 +11,11 @@ from app.config import settings
 from app.models.db import Session, Message, get_db
 
 from fastapi import APIRouter
+from fastapi import Depends, Request
+
+from app.services.llm import ask_claude
+from app.services.safety import check_user_message
+from app.services.handoff import create_escalation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
@@ -65,3 +70,47 @@ async def verify_webhook(
     if hub_mode == "subscribe" and hub_verify_token == settings.whatsapp_verify_token:
         return int(hub_challenge) if hub_challenge and hub_challenge.isdigit() else hub_challenge
     raise HTTPException(403, "Verification failed")
+@router.post("")
+async def receive_message(request: Request, db: AsyncSession = Depends(get_db)):
+    """Receives an incoming WhatsApp message, runs it through the chat pipeline, replies."""
+    payload = await request.json()
+
+    try:
+        change = payload["entry"][0]["changes"][0]["value"]
+        incoming = (change.get("messages") or [None])[0]
+        if incoming is None:
+            return {"ok": True}
+
+        from_phone = incoming["from"]
+        text = incoming["text"]["body"]
+    except (KeyError, IndexError):
+        logger.warning("Malformed WhatsApp payload")
+        return {"ok": True}
+
+    session = await _get_or_create_session(db, from_phone)
+
+    risk = check_user_message(text)
+    db.add(Message(
+        session_id=session.id,
+        sender="user",
+        content=text,
+        flagged=risk.triggered,
+        flag_reason=risk.reason,
+    ))
+    await db.commit()
+
+    history_result = await db.execute(
+        select(Message).where(Message.session_id == session.id).order_by(Message.created_at.asc()).limit(20)
+    )
+    history = [{"role": m.sender, "content": m.content} for m in history_result.scalars()]
+
+    reply_text = await ask_claude(history)
+
+    if risk.triggered:
+        await create_escalation(db, session, reason=risk.reason, level="counselor")
+
+    db.add(Message(session_id=session.id, sender="assistant", content=reply_text))
+    await db.commit()
+
+    await _send_whatsapp_reply(from_phone, reply_text)
+    return {"ok": True}
