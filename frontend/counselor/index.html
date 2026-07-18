@@ -6,8 +6,8 @@
 <title>Mbwira — Counselor Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;700&family=Manrope:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
-<style href="style.css" rel="stylesheet"></style>
 </head>
+
 <body>
 
 <div class="login-screen" id="loginScreen">
@@ -17,6 +17,7 @@
     <input type="password" id="pwd" placeholder="Password" autocomplete="off" />
     <button id="loginBtn">Enter</button>
   </div>
+  
 </div>
 
 <div class="main" id="main">
@@ -24,11 +25,13 @@
     <div class="brand">mb<span>wira</span> · counselor</div>
     <div style="font-size:0.85rem;opacity:0.7" id="tsNow"></div>
   </div>
+
   <div class="content">
     <div class="stats" id="stats"></div>
     <h2>Pending escalations</h2>
     <div id="escalationList"></div>
   </div>
+
 </div>
 
 <div class="modal-backdrop" id="modalBackdrop">
@@ -37,6 +40,7 @@
       <h3>Session details</h3>
       <button id="closeModal">×</button>
     </div>
+
     <div class="modal-body" id="modalBody"></div>
     <div class="callback-section" id="callbackSection" style="
       padding: 1.5rem 2rem;
@@ -46,9 +50,11 @@
       <h4 style="font-family: 'Fraunces', serif; font-size: 1.1rem; margin-bottom: 0.8rem;">
         Reach the user
       </h4>
+
       <div id="contactInfo" style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--muted);">
         Loading contact options...
       </div>
+
       <div id="revealedNumber" style="
         display: none;
         padding: 0.8rem 1rem;
@@ -66,57 +72,38 @@
           border: none; border-radius: 4px; cursor: pointer; font-family: inherit;
           font-size: 0.9rem;
         ">📞 Reveal number to call</button>
-
         <button id="sendWhatsappBtn" style="
           padding: 0.6rem 1rem; background: #25D366; color: white;
           border: none; border-radius: 4px; cursor: pointer; font-family: inherit;
           font-size: 0.9rem;
         ">💬 Send WhatsApp reply</button>
-
       </div>
+
       <div id="outboundArea" style="display: none; margin-top: 1rem;">
         <textarea id="outboundText" placeholder="Type a message to send the user on WhatsApp..." style="
           width: 100%; padding: 0.8rem; border: 1px solid rgba(45,61,46,0.2);
           border-radius: 4px; font-family: inherit; min-height: 80px; resize: vertical;
           margin-bottom: 0.5rem;
         "></textarea>
-
         <button id="outboundSendBtn" style="
           padding: 0.6rem 1rem; background: #25D366; color: white;
           border: none; border-radius: 4px; cursor: pointer; font-family: inherit;
           font-size: 0.9rem; font-weight: 600;
         ">Send</button>
-
       </div>
+
     </div>
-    
+
     <div class="resolve-section">
       <textarea id="resolveNotes" placeholder="Resolution notes (what did you do / how did you reach the user)..."></textarea>
       <button id="resolveBtn">Mark resolved</button>
     </div>
+
   </div>
+
 </div>
 
-    <div class="escalation-table">
-      <div class="escalation-row header">
-        <div>Age</div>
-        <div>Reason</div>
-        <div>Channel</div>
-        <div>Notes</div>
-        <div>Reachable?</div>
-      </div>
-      ${list.map(e => `
-        <div class="escalation-row" data-id="${e.id}">
-          <div>${slaBadge(e.age_minutes, e.reason)}</div>
-          <div>${reasonPill(e.reason)}</div>
-          <div><span class="channel-pill">${e.channel}</span></div>
-          <div style="font-size:0.85rem;color:var(--muted)">
-            ${(e.notes || "").slice(0, 100)}${(e.notes||"").length>100?"…":""}
-          </div>
-          <div>${e.contact_available ? "📞 yes" : "—"}</div>
-        </div>
-      `).join("")}
-    </div>
-  `;
+<script src="counselor.js"></script>
 </body>
+
 </html>
