@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 
 from app.config import settings
 from app.models.db import init_db
-from app.routers import ussd, chat
+from app.routers import ussd, chat, whatsapp, counselor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -43,7 +43,8 @@ app.add_middleware(
 
 app.include_router(ussd.router)
 app.include_router(chat.router)
-
+app.include_router(whatsapp.router)
+app.include_router(counselor.router)
 
 @app.get("/healthz")
 async def healthz():
@@ -67,4 +68,8 @@ if FRONTEND_DIR.exists():
     @app.get("/ussd")
     async def ussd_sim():
         return FileResponse(FRONTEND_DIR / "ussd")
+    
+    @app.get("/dashboard")
+    async def dashboard():
+        return FileResponse(FRONTEND_DIR / "counselor")
     
