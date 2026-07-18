@@ -114,7 +114,7 @@ async function openModal(id) {
     </div>
   `).join("");
 
-  // Find this escalation's metadata from the loaded list
+ 
   const list = await apiGet("/counselor/escalations?status=pending");
   const fromPending = list.find(e => e.id === id);
   if (!fromPending) {
@@ -124,7 +124,7 @@ async function openModal(id) {
     currentEscalationData = fromPending;
   }
 
-  // Reset the callback panel
+
   document.getElementById("revealedNumber").style.display = "none";
   document.getElementById("outboundArea").style.display = "none";
   document.getElementById("outboundText").value = "";
@@ -149,3 +149,76 @@ async function openModal(id) {
   document.getElementById("modalBackdrop").classList.add("visible");
 }
 
+document.getElementById("revealBtn").onclick = async () => {
+  const reason = prompt("Why are you revealing this number? (logged in audit trail)",
+    "Calling user regarding pending escalation");
+  if (!reason) return;
+  const res = await fetch(`/counselor/escalations/${currentEscalationId}/reveal-contact`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Dashboard-Password": password },
+    body: JSON.stringify({ reason }),
+  });
+  if (!res.ok) { alert("Failed to reveal number."); return; }
+  const data = await res.json();
+  const el = document.getElementById("revealedNumber");
+  el.style.display = "block";
+  el.innerHTML = `📞 <a href="tel:${data.contact_number}" style="color:var(--cream);text-decoration:underline">${data.contact_number}</a>
+    <span style="font-size:0.75rem;opacity:0.7;margin-left:0.5rem">(${data.channel})</span>`;
+};
+
+document.getElementById("sendWhatsappBtn").onclick = () => {
+  document.getElementById("outboundArea").style.display = "block";
+  document.getElementById("outboundText").focus();
+};
+
+document.getElementById("outboundSendBtn").onclick = async () => {
+  const text = document.getElementById("outboundText").value.trim();
+  if (!text) return;
+  const res = await fetch(`/counselor/escalations/${currentEscalationId}/send-message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Dashboard-Password": password },
+    body: JSON.stringify({ text }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert("Failed to send: " + (err.detail || res.statusText));
+    return;
+  }
+  alert("Sent. The user will receive it on WhatsApp shortly.");
+  document.getElementById("outboundText").value = "";
+  document.getElementById("outboundArea").style.display = "none";
+  await openModal(currentEscalationId);  // refresh transcript
+};
+
+document.getElementById("closeModal").onclick = () => {
+  document.getElementById("modalBackdrop").classList.remove("visible");
+};
+
+document.getElementById("resolveBtn").onclick = async () => {
+  const notes = document.getElementById("resolveNotes").value;
+  await fetch(`/counselor/escalations/${currentEscalationId}/resolve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Dashboard-Password": password },
+    body: JSON.stringify({ notes }),
+  });
+  document.getElementById("modalBackdrop").classList.remove("visible");
+  document.getElementById("resolveNotes").value = "";
+  await loadDashboard();
+};
+
+
+document.getElementById("loginBtn").onclick = async () => {
+  password = document.getElementById("pwd").value;
+  try {
+    await apiGet("/counselor/stats");
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("main").classList.add("visible");
+    loadDashboard();
+    setInterval(loadDashboard, 15000);
+  } catch (e) { /* shown by apiGet */ }
+};
+
+
+document.getElementById("pwd").addEventListener("keypress", e => {
+  if (e.key === "Enter") document.getElementById("loginBtn").click();
+});
