@@ -27,3 +27,44 @@ async function loadDashboard() {
     console.error(e);
   }
 }
+
+
+function renderStats(s) {
+  const el = document.getElementById("stats");
+  el.innerHTML = `
+    <div class="stat-card urgent">
+      <div class="label">Pending escalations</div>
+      <div class="value">${s.escalations_pending}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total sessions</div>
+      <div class="value">${s.sessions_total}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Total escalations</div>
+      <div class="value">${s.escalations_total}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">By channel</div>
+      <div class="value" style="font-size:1rem;font-family:inherit">
+        ${Object.entries(s.sessions_by_channel).map(([k,v]) => `${k}: ${v}`).join(" · ") || "—"}
+      </div>
+    </div>
+  `;
+}
+
+function formatAge(mins) {
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60 * 24) return `${Math.floor(mins/60)}h ${mins%60}m`;
+  return `${Math.floor(mins/60/24)}d ${Math.floor(mins/60)%24}h`;
+}
+
+function slaBadge(mins, reason) {
+  const urgent = ["suicidal_ideation", "medical_emergency", "gbv", "child_safeguarding"];
+  const target = urgent.includes(reason) ? 60 : 24 * 60;
+  const pct = mins / target;
+  const color = pct > 1 ? "var(--urgent)" : pct > 0.5 ? "var(--clay)" : "var(--ok)";
+  return `<span style="color:${color};font-weight:600">${formatAge(mins)}</span>`;
+}
+
+
