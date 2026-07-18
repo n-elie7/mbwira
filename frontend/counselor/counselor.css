@@ -3,18 +3,22 @@
     --cream: #F7F1E8; --cream-warm: #EFE5D2; --ink: #1A1A1A; --muted: #6B6258;
     --urgent: #C33E3E; --ok: #4A7C59;
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
+
   body {
     font-family: 'Manrope', sans-serif;
     background: var(--cream);
     color: var(--ink);
     min-height: 100vh;
   }
+
   .login-screen {
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     padding: 1rem;
   }
+
   .login-card {
     background: #fff;
     padding: 3rem 2.5rem;
@@ -22,12 +26,15 @@
     max-width: 400px; width: 100%;
     box-shadow: 0 20px 40px -20px rgba(0,0,0,0.15);
   }
+
   .login-card h1 {
     font-family: 'Fraunces', serif;
     font-size: 1.6rem;
     margin-bottom: 0.4rem;
   }
+
   .login-card p { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+
   .login-card input {
     width: 100%;
     padding: 0.9rem 1rem;
@@ -37,6 +44,7 @@
     font-family: inherit;
     font-size: 1rem;
   }
+
   .login-card button {
     width: 100%;
     padding: 0.95rem;
@@ -49,49 +57,59 @@
     cursor: pointer;
   }
 
-  /* --- main layout --- */
+ 
   .main { display: none; }
+
   .main.visible { display: block; }
+
   .topbar {
     background: var(--forest-dark);
     color: var(--cream);
     padding: 1rem 2rem;
     display: flex; justify-content: space-between; align-items: center;
   }
+
   .topbar .brand {
     font-family: 'Fraunces', serif;
     font-size: 1.2rem;
   }
+
   .topbar .brand span { color: var(--clay); }
+
   .content {
     max-width: 1200px;
     margin: 0 auto;
     padding: 2rem;
   }
+
   .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
   }
+
   .stat-card {
     background: #fff;
     border: 1px solid rgba(45,61,46,0.1);
     border-radius: 6px;
     padding: 1.2rem;
   }
+
   .stat-card .label {
     font-size: 0.72rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--muted);
   }
+
   .stat-card .value {
     font-family: 'Fraunces', serif;
     font-size: 2.2rem;
     font-weight: 500;
     margin-top: 0.3rem;
   }
+
   .stat-card.urgent .value { color: var(--urgent); }
 
   h2 {
@@ -100,6 +118,7 @@
     margin: 2rem 0 1rem;
     font-weight: 500;
   }
+
   .escalation-table {
     width: 100%;
     background: #fff;
@@ -107,6 +126,7 @@
     overflow: hidden;
     border: 1px solid rgba(45,61,46,0.1);
   }
+
   .escalation-row {
     display: grid;
     grid-template-columns: 120px 140px 100px 1fr 120px;
@@ -117,7 +137,9 @@
     cursor: pointer;
     transition: background 0.15s;
   }
+
   .escalation-row:hover { background: var(--cream-warm); }
+
   .escalation-row.header {
     background: var(--cream-warm);
     font-size: 0.75rem;
@@ -126,7 +148,9 @@
     color: var(--muted);
     cursor: default;
   }
+
   .escalation-row.header:hover { background: var(--cream-warm); }
+
   .pill {
     display: inline-block;
     padding: 0.2rem 0.6rem;
@@ -134,9 +158,13 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
+
   .pill.urgent { background: var(--urgent); color: white; }
+
   .pill.warn { background: var(--clay); color: white; }
+
   .pill.info { background: var(--forest); color: var(--cream); }
+
   .channel-pill {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.72rem;
@@ -146,7 +174,7 @@
     text-transform: uppercase;
   }
 
-  /* --- modal --- */
+  
   .modal-backdrop {
     position: fixed; inset: 0;
     background: rgba(28,39,29,0.5);
@@ -155,7 +183,9 @@
     z-index: 100;
     padding: 1rem;
   }
+
   .modal-backdrop.visible { display: flex; }
+
   .modal {
     background: var(--cream);
     border-radius: 8px;
@@ -164,17 +194,22 @@
     max-height: 85vh;
     overflow-y: auto;
   }
+
   .modal-header {
     padding: 1.5rem 2rem;
     border-bottom: 1px solid rgba(45,61,46,0.1);
     display: flex; justify-content: space-between; align-items: center;
   }
+
   .modal-header h3 { font-family: 'Fraunces', serif; font-size: 1.3rem; }
+
   .modal-header button {
     background: transparent; border: none; font-size: 1.5rem;
     cursor: pointer; color: var(--muted);
   }
+
   .modal-body { padding: 2rem; }
+
   .msg-bubble {
     padding: 0.8rem 1rem;
     margin-bottom: 0.5rem;
@@ -183,14 +218,20 @@
     line-height: 1.5;
     white-space: pre-wrap;
   }
+
   .msg-bubble.user { background: var(--forest); color: var(--cream); margin-left: 3rem; }
+
   .msg-bubble.assistant { background: #fff; border: 1px solid rgba(45,61,46,0.1); margin-right: 3rem; }
+
   .msg-bubble.flagged { border-left: 4px solid var(--urgent); }
+
   .msg-meta { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+
   .resolve-section {
     padding: 1.5rem 2rem;
     border-top: 1px solid rgba(45,61,46,0.1);
   }
+
   .resolve-section textarea {
     width: 100%;
     padding: 0.8rem;
@@ -201,6 +242,7 @@
     min-height: 70px;
     margin-bottom: 1rem;
   }
+
   .resolve-section button {
     padding: 0.7rem 1.5rem;
     background: var(--ok);
@@ -211,6 +253,7 @@
     font-family: inherit;
     font-weight: 600;
   }
+  
   .empty {
     padding: 3rem;
     text-align: center;
