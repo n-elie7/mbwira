@@ -6,4 +6,4 @@ venv
 /app/routers/__pycache__
 /app/services/__pycache__
 /app/.DS_Store
-/backend/mbwira.db
+/mbwira.db
