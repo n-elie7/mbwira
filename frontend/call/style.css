@@ -1,0 +1,74 @@
+:root {
+    --clay: #C35A4E; --forest: #2D3D2E; --forest-dark: #1C271D;
+    --cream: #F7F1E8; --cream-warm: #EFE5D2;
+    --ink: #1A1A1A; --muted: #6B6258;
+
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Manrope',sans-serif;
+    background: var(--forest-dark);
+    color: var(--cream);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+call-header {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo{
+    font-family: 'Fraunces',serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.logo span{
+    color: var(--clay);
+}
+
+.privacy-pill{
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0,12em;
+    padding: 0.3rem 0.7rem;
+    background: rgba(247, 241, 232, 0.1);
+    border-radius: 100px;
+}
+
+.privacy-pill {
+    font: size 0.7em;
+    text-transform: uppercase;
+    letter-spacing:0.12em;
+    padding: 0.12em;
+    background: rgba(247, 241, 232, 0.1);
+    border-radius: 100px;
+}
+
+.privacy-pill::before{
+    content:"●";
+    color: #4CAF50;
+    margin-right: 0.4rem;
+}
+
+.stage{
+    flex:1;
+    position: relative;
+    margin:0 1rem;
+    border-radius: 16px;
+    overflow:hidden;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
