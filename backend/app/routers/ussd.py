@@ -28,7 +28,7 @@ def _hash_phone(phone: str) -> str:
 
 
 async def _get_or_create_session(
-    db: AsyncSession, session_id: str, phone_hash: str, phone: str
+    db: AsyncSession, session_id: str, phone_hash: str
 ) -> DBSession:
     #Retrieve an existing USSD session or create a new one
     q = await db.execute(select(DBSession).where(DBSession.session_id == session_id))
@@ -39,7 +39,6 @@ async def _get_or_create_session(
         session_id=session_id,
         channel="ussd",
         phone_hash=phone_hash,
-        contact_number=phone,  # carrier already gave us the number
         language="rw",
     )
     db.add(sess)
@@ -61,7 +60,7 @@ async def ussd_callback(
     "Incoming USSD session %s",
     sessionId,
 )
-    db_session = await _get_or_create_session(db, sessionId, phone_hash, phoneNumber)
+    db_session = await _get_or_create_session(db, sessionId, phone_hash)
 
     # Determine the next screen by following the user's input path
     state, screen = walk_tree(text, lang="rw")  # default Kinyarwanda

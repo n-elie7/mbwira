@@ -1,0 +1,11 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+backend/venv
+backend/mbwira.db
+*.db
+.env
+**/.env
+work.py
+README.md
