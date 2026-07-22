@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mbwira | Video call</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="call-header">
@@ -16,17 +17,20 @@
 
     <div class="stage">
         <video id="remoteVideo" autoplay playsinline></video>
-        <video id="localvideo" autoplay playsinline muted></video>
+        <video id="localVideo" autoplay playsinline muted></video>
         <div class="status-overlay" id="statusOverlay">
             <div class="pulse"></div>
-            <h2 id=statusTitle>...</h2>
+            <h2 id="statusTitle">...</h2>
             <p id="statusSub"></p>
         </div>
     </div>
+
     <div class="controls">
-        <button class="ctrl-btn" id="micBtn" title="Mute">🎙️</button>
-        <button class="ctrl-btn" id="camBtn" title="Camera">📷</button>
-        <button class="ctrl-btn" id="endBtn" title="End call">📞</button>
+        <button class="ctrl-btn" id="micBtn" title="Mute" aria-label="Mute">Mic</button>
+        <button class="ctrl-btn" id="camBtn" title="Camera" aria-label="Camera">Cam</button>
+        <button class="ctrl-btn" id="endBtn" title="End call" aria-label="End call">End</button>
     </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
