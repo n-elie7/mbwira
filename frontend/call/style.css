@@ -72,3 +72,113 @@ call-header {
     align-items: center;
     justify-content: center;
 }
+
+video {
+    object-fit: cover;
+}
+
+#remoteVideo {
+    width: 100%;
+    height:100%;
+    position: absolute;
+    inset: 0;
+}
+
+#localVideo {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    width: clamp(120px, 24vw, 220px);
+    aspect-ratio: 4/3;
+    border-radius: 10px;
+    border: 2px solid rgba(147, 241, 232, 0.4);
+    background: var(--forest);
+    z-index:2;
+    transform: scaleX(-1);
+}
+
+.status-overlay {
+    position: absolute;
+    inset:0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+    padding: 2rem;
+    background: radial-gradient(ellipse at center, rgba(45,61,46,0.85), rgba(28,39,29,0.95));
+    z-index: 1;
+    transition: opacity 0,3s
+}
+
+.status-overlay.hidden {
+    opacity:0;
+    pointer-events: none;
+}
+
+.status-overlay h2 {
+    font-family: 'Fraunces',serif;
+    font-weight:500;
+    font-size: 1.4rem;
+    max-width: 26ch;
+}
+
+.status-overlay p {
+    color: rgba(247, 241, 232, 0.7);
+    font-size: 0.9rem;
+    max-width: 40ch;
+}
+
+.pulse{
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--clay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {box-shadow: 0 0 0 0 rgba(195,90,78,0.5);}
+    50% {box-shadow:0 0 0 0 22px rgba(195,90,78,0);}
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.ctrl-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3rem;
+    background: rgba(247, 241, 232, 0.12);
+    color: var(--cream);
+    transition: background 0.15s;
+}
+
+.ctrl-btn:hover {
+    background: rgba(247, 241, 232, 0.25);
+}
+
+.ctrl-btn.off{
+    background:var(--cream);
+    color: var(--ink);
+}
+
+.ctrl-btn.end{
+    background:#C0392B;
+}
+
+.ctrl-btn:hover{
+    background:#E74C3C;
+}
