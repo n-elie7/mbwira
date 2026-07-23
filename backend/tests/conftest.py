@@ -51,3 +51,15 @@ async def client(sessionmaker_):
         yield ac
     app.dependency_overrides.clear()
 
+
+@pytest.fixture
+def stub_llm(monkeypatch):
+    """Replace the LLM call with a deterministic canned reply."""
+
+    async def fake_ask_claude(messages, **kwargs):
+        return fake_ask_claude.reply
+
+    fake_ask_claude.reply = "Ndumva. Mbwira byinshi. (I hear you.)"
+    monkeypatch.setattr("app.routers.chat.ask_claude", fake_ask_claude)
+    return fake_ask_claude
+
