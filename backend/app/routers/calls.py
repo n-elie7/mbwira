@@ -20,6 +20,19 @@ import logging
 
 from fastapi import APIRouter
 from pydantic import BaseModel
+import secrets
+
+from fastapi import Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.db import CallRequest, Message, Session as DBSession, get_dbimport secrets
+
+from fastapi import Depends, HTTPException
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.models.db import CallRequest, Message, Session as DBSession, get_db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/calls", tags=["calls"])
@@ -39,3 +52,45 @@ class CallRequestOut(BaseModel):
     call_id: int
     room_id: str
     status: str
+
+    @router.post("/request", response_model=CallRequestOut)
+async def request_call(
+    body: RequestCallBody, db: AsyncSession = Depends(get_db)
+) -> CallRequestOut:
+    """Starts a video call request for an anonymous session."""
+    q = await db.execute(
+        select(DBSession).where(DBSession.session_id == body.session_id)
+    )
+    sess = q.scalar_one_or_none()
+    if not sess:
+        raise HTTPException(404, "Session not found. Start a new session.")
+
+    # If there's already an open request for this session, reuse it
+    # instead of creating duplicates on the dashboard.
+    q = await db.execute(
+        select(CallRequest).where(
+            CallRequest.session_id == sess.id,
+            CallRequest.status.in_(("waiting", "active")),
+        )
+    )
+    existing = q.scalar_one_or_none()
+    if existing:
+        return CallRequestOut(
+            call_id=existing.id, room_id=existing.room_id, status=existing.status
+        )
+
+    call = CallRequest(
+        session_id=sess.id,
+        room_id="room_" + secrets.token_urlsafe(16),
+    )
+    db.add(call)
+    db.add(Message(
+        session_id=sess.id,
+        role="system",
+        content="[CALL] User requested a video call with a counselor.",
+        flagged=False,
+    ))
+    await db.commit()
+    await db.refresh(call)
+    logger.info("Video call requested: session=%s room=%s", sess.session_id, call.room_id)
+    return CallRequestOut(call_id=call.id, room_id=call.room_id, status=call.status)
