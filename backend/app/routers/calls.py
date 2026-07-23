@@ -34,6 +34,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.db import CallRequest, Message, Session as DBSession, get_db
 from datetime import datetime
+from fastapi import WebSocket, WebSocketDisconnect
+
+from app.models.db import AsyncSessionLocal
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/calls", tags=["calls"])
@@ -127,3 +130,68 @@ async def end_call(room_id: str, db: AsyncSession = Depends(get_db)):
         ))
         await db.commit()
     return {"ok": True, "status": call.status}
+def _other_role(role: str) -> str:
+    return "counselor" if role == "user" else "user"
+
+
+@router.websocket("/ws/{room_id}")
+async def signaling(ws: WebSocket, room_id: str, role: str = "user"):
+    """Passes WebRTC connection messages back and forth between the
+    two people in a call room."""
+    await ws.accept()
+
+    if role not in ("user", "counselor"):
+        await ws.close(code=4400)
+        return
+
+    async with AsyncSessionLocal() as db:
+        q = await db.execute(select(CallRequest).where(CallRequest.room_id == room_id))
+        call = q.scalar_one_or_none()
+        if not call or call.status in ("ended", "cancelled"):
+            await ws.close(code=4404)
+            return
+        if role == "counselor" and call.status == "waiting":
+            call.status = "active"
+            call.started_at = datetime.utcnow()
+            db.add(Message(
+                session_id=call.session_id,
+                role="system",
+                content="[CALL] Counselor joined the video call.",
+                flagged=False,
+            ))
+            await db.commit()
+
+    peers = rooms.setdefault(room_id, {})
+    if role in peers:
+        # Someone's already connected with this role (e.g. a duplicate
+        # browser tab) — refuse the new connection rather than replace it.
+        await ws.close(code=4409)
+        return
+    peers[role] = ws
+
+    # Let the new person know who's already here, and tell the other
+    # side that someone just joined.
+    await ws.send_json({"type": "room-state", "peers": [r for r in peers if r != role]})
+    other = peers.get(_other_role(role))
+    if other:
+        await other.send_json({"type": "peer-joined", "role": role})
+
+    try:
+        while True:
+            data = await ws.receive_json()
+            target = peers.get(_other_role(role))
+            if target:
+                await target.send_json(data)
+    except WebSocketDisconnect:
+        pass
+    finally:
+        if peers.get(role) is ws:
+            peers.pop(role, None)
+        other = peers.get(_other_role(role))
+        if other:
+            try:
+                await other.send_json({"type": "peer-left", "role": role})
+            except Exception:
+                pass
+        if not peers:
+            rooms.pop(room_id, None)
