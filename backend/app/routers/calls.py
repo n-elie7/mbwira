@@ -26,7 +26,8 @@ from fastapi import Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.db import CallRequest, Message, Session as DBSession, get_dbimport secrets
+from app.models.db import CallRequest, Message, Session as DBSession, get_db
+import secrets
 
 from fastapi import Depends, HTTPException
 from sqlalchemy import select
@@ -57,7 +58,7 @@ class CallRequestOut(BaseModel):
     room_id: str
     status: str
 
-    @router.post("/request", response_model=CallRequestOut)
+@router.post("/request", response_model=CallRequestOut)
 async def request_call(
     body: RequestCallBody, db: AsyncSession = Depends(get_db)
 ) -> CallRequestOut:
