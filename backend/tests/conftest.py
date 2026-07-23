@@ -36,4 +36,18 @@ async def db(sessionmaker_):
         yield session
 
 
+@pytest_asyncio.fixture
+async def client(sessionmaker_):
+    """An HTTP client wired to the app, with `get_db` pointed at the test DB. using ASGI transport."""
+
+
+    async def override_get_db():
+        async with sessionmaker_() as session:
+            yield session
+
+    app.dependency_overrides[get_db] = override_get_db
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        yield ac
+    app.dependency_overrides.clear()
 
