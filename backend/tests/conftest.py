@@ -27,3 +27,13 @@ async def engine():
 @pytest_asyncio.fixture
 async def sessionmaker_(engine):
     return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+@pytest_asyncio.fixture
+async def db(sessionmaker_):
+    """Session fixture that yields a database session for testing."""
+    async with sessionmaker_() as session:
+        yield session
+
+
+
