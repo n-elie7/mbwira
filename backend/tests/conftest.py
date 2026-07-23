@@ -10,3 +10,17 @@ from app.main import app
 from app.models.db import Base, get_db
 
 
+@pytest_asyncio.fixture
+async def engine():
+
+    eng = create_async_engine(
+        "sqlite+aiosqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    async with eng.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield eng
+    await eng.dispose()
+
+    
