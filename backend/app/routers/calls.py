@@ -33,6 +33,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.db import CallRequest, Message, Session as DBSession, get_db
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/calls", tags=["calls"])
@@ -107,3 +108,22 @@ async def call_status(room_id: str, db: AsyncSession = Depends(get_db)):
         "counselor_connected": "counselor" in peers,
         "user_connected": "user" in peers,
     }
+@router.post("/{room_id}/end")
+async def end_call(room_id: str, db: AsyncSession = Depends(get_db)):
+    """Marks a call as finished. Either side can call this, including
+    automatically when someone closes the tab."""
+    q = await db.execute(select(CallRequest).where(CallRequest.room_id == room_id))
+    call = q.scalar_one_or_none()
+    if not call:
+        raise HTTPException(404, "Call not found")
+    if call.status in ("waiting", "active"):
+        call.status = "cancelled" if call.status == "waiting" else "ended"
+        call.ended_at = datetime.utcnow()
+        db.add(Message(
+            session_id=call.session_id,
+            role="system",
+            content=f"[CALL] Video call {call.status}.",
+            flagged=False,
+        ))
+        await db.commit()
+    return {"ok": True, "status": call.status}
