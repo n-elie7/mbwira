@@ -92,3 +92,42 @@ async def get_db() -> AsyncSession:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+
+
+
+class CallRequest(Base):
+    """Tracks a video call between an anonymous user and a counselor.
+    Since the room id is just a random secret, the counselor never
+    learns anything about the user beyond their session token.
+    """
+    __tablename__ = "call_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    session_id: Mapped[int] = mapped_column(ForeignKey("sessions.id"), index=True)
+    room_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    # waiting: no counselor has joined yet
+    # active: both people are connected
+    # ended: the call finished normally
+    # cancelled: the user backed out before anyone picked up
+    status: Mapped[str] = mapped_column(String(16), default="waiting")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    session: Mapped[Session] = relationship()
+
+
+# --- Engine and session factory setup ---
+engine = create_async_engine(settings.database_url, echo=False)
+AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        yield session
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)        
