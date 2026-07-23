@@ -23,4 +23,7 @@ async def engine():
     yield eng
     await eng.dispose()
 
-    
+
+@pytest_asyncio.fixture
+async def sessionmaker_(engine):
+    return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
