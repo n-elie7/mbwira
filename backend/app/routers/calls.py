@@ -94,3 +94,16 @@ async def request_call(
     await db.refresh(call)
     logger.info("Video call requested: session=%s room=%s", sess.session_id, call.room_id)
     return CallRequestOut(call_id=call.id, room_id=call.room_id, status=call.status)
+@router.get("/{room_id}/status")
+async def call_status(room_id: str, db: AsyncSession = Depends(get_db)):
+    """Lets the waiting side check whether a counselor has joined yet."""
+    q = await db.execute(select(CallRequest).where(CallRequest.room_id == room_id))
+    call = q.scalar_one_or_none()
+    if not call:
+        raise HTTPException(404, "Call not found")
+    peers = rooms.get(room_id, {})
+    return {
+        "status": call.status,
+        "counselor_connected": "counselor" in peers,
+        "user_connected": "user" in peers,
+    }
