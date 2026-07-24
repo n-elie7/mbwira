@@ -16,12 +16,14 @@ async function apiGet(path) {
 
 async function loadDashboard() {
   try {
-    const [stats, escalations] = await Promise.all([
+    const [stats, escalations, calls] = await Promise.all([
       apiGet("/counselor/stats"),
       apiGet("/counselor/escalations?status=pending"),
+      apiGet("/counselor/calls"),
     ]);
     renderStats(stats);
     renderEscalations(escalations);
+    renderCalls(calls);
     document.getElementById("tsNow").textContent = new Date().toLocaleString();
   } catch (e) {
     console.error(e);
@@ -262,3 +264,4 @@ function renderCalls(list) {
     btn.onclick = () => joinCall(parseInt(btn.dataset.id));
   });
 }
+
