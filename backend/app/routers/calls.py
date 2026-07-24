@@ -1,20 +1,12 @@
 """
 Anonymous video call bridge between web chat users and counselors.
 
-How it works:
-  1. A user in the chat clicks the video call button, which calls
-     POST /calls/request. This creates a CallRequest with a random,
-     unguessable room id.
-  2. That request shows up on the counselor dashboard. Whichever
-     counselor is free joins the same room.
-  3. Both sides open /call?room=<room_id> and exchange WebRTC connection
-     details through the signaling WebSocket below. Once connected,
-     audio/video flows directly between the two browsers — our server
-     only passes along small connection messages and never sees the
-     actual call.
+Flow:
+  1. A user clicks the call button (`POST /calls/request`), which creates a CallRequest with a random, unguessable room ID.
+  2. The request pops up on the counselor dashboard, and the first available counselor joins.
+  3. Both parties open `/call?room=<room_id>` and exchange WebRTC signaling messages via the WebSocket below. Once established, audio/video streams peer-to-peer the server only relays signal payloads and never touches raw media.
 
-No identity is ever exchanged — the room id is just a random token,
-same idea as our session tokens.
+Zero identity data is shared; the room ID acts as a temporary disposable token.
 """
 import logging
 
@@ -44,7 +36,7 @@ router = APIRouter(prefix="/calls", tags=["calls"])
 
 # Keeps track of who's connected to each call, in memory.
 # room_id -> {"user": websocket, "counselor": websocket}
-# Fine for now with a single server — would move to something like
+# Fine for now with a single server  would move to something like
 # Redis if we ever need multiple servers running at once.
 rooms: dict[str, dict] = {}
 
@@ -165,7 +157,7 @@ async def signaling(ws: WebSocket, room_id: str, role: str = "user"):
     peers = rooms.setdefault(room_id, {})
     if role in peers:
         # Someone's already connected with this role (e.g. a duplicate
-        # browser tab) — refuse the new connection rather than replace it.
+        # browser tab)  refuse the new connection rather than replace it.
         await ws.close(code=4409)
         return
     peers[role] = ws
