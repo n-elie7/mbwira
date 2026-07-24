@@ -55,3 +55,14 @@ class TestCheckUserMessage:
             ("amaraso menshi", "medical_emergency"),
         ],
     )
+
+    def test_other_categories(self, text, reason):
+        signal = check_user_message(text)
+        assert signal.triggered is True
+        assert signal.reason == reason
+
+    def test_matched_text_is_reported(self):
+        signal = check_user_message("please, I want to die tonight")
+        assert signal.matched_text == "want to die"
+
+    
