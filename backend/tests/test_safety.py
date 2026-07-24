@@ -27,4 +27,18 @@ class TestCheckUserMessage:
             "sometimes I think about suicide",
         ],
     )
+    def test_suicidal_english(self, text):
+        signal = check_user_message(text)
+        assert signal.triggered is True
+        assert signal.reason == "suicidal_ideation"
+
+    @pytest.mark.parametrize("text", ["Ndumva nshaka kwiyahura", "sinshaka kubaho"])
+    def test_suicidal_kinyarwanda(self, text):
+        signal = check_user_message(text)
+        assert signal.triggered is True
+        assert signal.reason == "suicidal_ideation"
+
+    def test_case_insensitive(self):
+        assert check_user_message("I WANT TO DIE").triggered is True
+
     
