@@ -8,3 +8,15 @@ from app.services.safety import (
     extract_escalation_from_response,
     safety_response_text,
 )
+
+class TestCheckUserMessage:
+    def test_empty_and_none_are_safe(self):
+        assert check_user_message("").triggered is False
+        assert check_user_message(None).triggered is False
+
+    def test_benign_message_is_safe(self):
+        signal = check_user_message("Muraho, nashakaga kumenya ku bijyanye n'imihango.")
+        assert signal.triggered is False
+        assert signal.reason is None
+
+    
