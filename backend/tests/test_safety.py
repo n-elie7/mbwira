@@ -96,5 +96,16 @@ class TestExtractEscalation:
         assert reason == "suicidal_ideation"
         assert cleaned == "You are not alone."
 
-    
+    def test_tag_is_case_insensitive(self):
+        reason, _ = extract_escalation_from_response("[escalate: GBV]")
+        assert reason == "gbv"
+
+    def test_multiple_tags_first_reason_kept_all_removed(self):
+        reason, cleaned = extract_escalation_from_response(
+            "a [ESCALATE: one] b [ESCALATE: two] c"
+        )
+        assert reason == "one"
+        assert "ESCALATE" not in cleaned
+
+
     
