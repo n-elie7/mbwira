@@ -66,3 +66,17 @@ class TestCheckUserMessage:
         assert signal.matched_text == "want to die"
 
     
+    @pytest.mark.parametrize("text", ["i'm 15", "i'm 17", "ndi w'imyaka 14"])
+    def test_child_safeguarding_age(self, text):
+        signal = check_user_message(text)
+        assert signal.triggered is True
+        assert signal.reason == "child_safeguarding_age"
+
+    def test_adult_age_does_not_trigger_safeguarding(self):
+        # 18/19 are outside the 10-17 safeguarding range.
+        assert check_user_message("i'm 18").triggered is False
+
+    def test_precedence_suicidal_beats_gbv(self):
+        # Suicidal keywords are checked first, so they win when both appear.
+        signal = check_user_message("he raped me and now I want to die")
+        assert signal.reason == "suicidal_ideation"
