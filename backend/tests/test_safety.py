@@ -80,3 +80,21 @@ class TestCheckUserMessage:
         # Suicidal keywords are checked first, so they win when both appear.
         signal = check_user_message("he raped me and now I want to die")
         assert signal.reason == "suicidal_ideation"
+
+
+
+class TestExtractEscalation:
+    def test_no_tag_returns_text_unchanged(self):
+        reason, cleaned = extract_escalation_from_response("Just a normal reply.")
+        assert reason is None
+        assert cleaned == "Just a normal reply."
+
+    def test_tag_extracted_and_stripped(self):
+        reason, cleaned = extract_escalation_from_response(
+            "You are not alone. [ESCALATE: suicidal_ideation]"
+        )
+        assert reason == "suicidal_ideation"
+        assert cleaned == "You are not alone."
+
+    
+    
