@@ -41,4 +41,17 @@ class TestCheckUserMessage:
     def test_case_insensitive(self):
         assert check_user_message("I WANT TO DIE").triggered is True
 
-    
+    def test_leading_trailing_whitespace_is_stripped(self):
+        assert check_user_message("   suicide   ").reason == "suicidal_ideation"
+
+    @pytest.mark.parametrize(
+        "text,reason",
+        [
+            ("he raped me", "gender_based_violence"),
+            ("my boyfriend forced me", "gender_based_violence"),
+            ("yankubise cyane", "gender_based_violence"),
+            ("I have heavy bleeding", "medical_emergency"),
+            ("I took pills to abort", "medical_emergency"),
+            ("amaraso menshi", "medical_emergency"),
+        ],
+    )
