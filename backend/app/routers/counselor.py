@@ -53,6 +53,13 @@ class MessageOut(BaseModel):
 class ResolveRequest(BaseModel):
     notes: str | None = None
 
+class CallOut(BaseModel):
+    id: int
+    session_id: str
+    channel: str
+    status: str
+    age_minutes: int
+
 
 @router.get("/escalations", response_model=list[EscalationOut])
 async def list_escalations(
