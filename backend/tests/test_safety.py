@@ -120,4 +120,14 @@ class TestSafetyResponseText:
         assert "114" in safety_response_text("suicidal_ideation", "en")
         assert "114" in safety_response_text("suicidal_ideation", "rw")
 
-    
+    def test_gbv_includes_isange_number(self):
+        assert "3029" in safety_response_text("gender_based_violence", "en")
+
+    def test_unknown_reason_returns_empty(self):
+        assert safety_response_text("something_else", "en") == ""
+
+    def test_language_defaults_to_kinyarwanda(self):
+        # Default lang is 'rw'; the RW copy differs from the EN copy.
+        assert safety_response_text("medical_emergency") != safety_response_text(
+            "medical_emergency", "en"
+        )
