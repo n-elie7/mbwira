@@ -26,6 +26,7 @@ async function loadDashboard() {
   } catch (e) {
     console.error(e);
   }
+
 }
 
 
@@ -222,3 +223,42 @@ document.getElementById("loginBtn").onclick = async () => {
 document.getElementById("pwd").addEventListener("keypress", e => {
   if (e.key === "Enter") document.getElementById("loginBtn").click();
 });
+
+
+
+function renderCalls(list) {
+  const el = document.getElementById("callList");
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">No one is waiting for a video call.</div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="escalation-table">
+      <div class="escalation-row header">
+        <div>Age</div>
+        <div>Status</div>
+        <div>Channel</div>
+        <div>Session</div>
+        <div></div>
+      </div>
+      ${list.map(c => `
+        <div class="escalation-row" style="cursor:default">
+          <div>${slaBadge(c.age_minutes, "video_call")}</div>
+          <div><span class="pill ${c.status === "waiting" ? "urgent" : "info"}">${c.status === "waiting" ? " waiting" : "on call"}</span></div>
+          <div><span class="channel-pill">${c.channel}</span></div>
+          <div style="font-size:0.8rem;color:var(--muted);font-family:'JetBrains Mono',monospace">${c.session_id.slice(0, 16)}…</div>
+          <div>
+            <button class="join-call-btn" data-id="${c.id}" style="
+              padding: 0.5rem 1rem; background: var(--forest); color: var(--cream);
+              border: none; border-radius: 100px; cursor: pointer;
+              font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            ">Join call</button>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+  `;
+  el.querySelectorAll(".join-call-btn").forEach(btn => {
+    btn.onclick = () => joinCall(parseInt(btn.dataset.id));
+  });
+}
