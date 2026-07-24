@@ -19,4 +19,12 @@ class TestCheckUserMessage:
         assert signal.triggered is False
         assert signal.reason is None
 
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "I want to kill myself",
+            "I don't want to live anymore",
+            "sometimes I think about suicide",
+        ],
+    )
     
