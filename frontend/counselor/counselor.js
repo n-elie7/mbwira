@@ -264,3 +264,10 @@ function renderCalls(list) {
     btn.onclick = () => joinCall(parseInt(btn.dataset.id));
   });
 }
+
+async function joinCall(id) {
+  const res = await fetch(`/counselor/calls/${id}/join`, {
+    method: "POST",
+    headers: { "X-Dashboard-Password": password },
+  });
+  
