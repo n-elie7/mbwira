@@ -108,4 +108,16 @@ class TestExtractEscalation:
         assert "ESCALATE" not in cleaned
 
 
+class TestSafetyResponseText:
+    @pytest.mark.parametrize(
+        "reason", ["suicidal_ideation", "gender_based_violence", "medical_emergency"]
+    )
+    def test_known_reasons_return_text_both_languages(self, reason):
+        assert safety_response_text(reason, "rw").strip() != ""
+        assert safety_response_text(reason, "en").strip() != ""
+
+    def test_suicidal_includes_hotline(self):
+        assert "114" in safety_response_text("suicidal_ideation", "en")
+        assert "114" in safety_response_text("suicidal_ideation", "rw")
+
     
