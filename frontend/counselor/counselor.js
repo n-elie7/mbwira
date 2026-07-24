@@ -264,4 +264,3 @@ function renderCalls(list) {
     btn.onclick = () => joinCall(parseInt(btn.dataset.id));
   });
 }
-
