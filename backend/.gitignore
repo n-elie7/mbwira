@@ -7,3 +7,4 @@ venv
 /app/services/__pycache__
 /app/.DS_Store
 /mbwira.db
+/tests/__pycache__
