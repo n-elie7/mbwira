@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.db import Escalation, Session, Message, get_db
+from app.models.db import CallRequest, Escalation, Session, Message, get_db
 
 router = APIRouter(
     prefix="/counselor",
