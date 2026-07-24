@@ -265,9 +265,18 @@ function renderCalls(list) {
   });
 }
 
-async function joinCall(id) {
+
+  async function joinCall(id) {
   const res = await fetch(`/counselor/calls/${id}/join`, {
     method: "POST",
     headers: { "X-Dashboard-Password": password },
   });
-  
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert("Could not join call: " + (err.detail || res.statusText));
+    await loadDashboard();
+    return;
+  }
+  const data = await res.json();
+  window.open(`/call?room=${encodeURIComponent(data.room_id)}&role=counselor`, "_blank");
+}
