@@ -186,13 +186,32 @@
     transition: all 0.15s;
   }
   .starter:hover { background: var(--cream-warm); border-color: var(--forest); }
+  .header-actions { display: flex; align-items: center; gap: 0.6rem; }
+  .video-call-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    padding: 0.45rem 0.9rem;
+    background: var(--clay);
+    color: var(--cream);
+    border: none;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .video-call-btn:hover { opacity: 0.9; }
+  .video-call-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 </head>
 <body>
 
 <header class="app-header">
   <div class="logo">mb<span>wira</span>.</div>
-  <div class="privacy-pill" id="privacy">Ibanga ryawe rirarinzwe</div>
+  <div class="header-actions">
+    <button class="video-call-btn" id="videoCallBtn">📹 <span id="videoCallLabel">Hamagara umujyanama</span></button>
+    <div class="privacy-pill" id="privacy">Ibanga ryawe rirarinzwe</div>
+  </div>
 </header>
 
 <div class="chat-container">
@@ -235,7 +254,11 @@ const strings = {
       "Sinsinzira neza",
       "Nkeneye umujyanama"
     ],
-    escalation: "Umujyanama azaguhamagara mu masaha 24."
+    escalation: "Umujyanama azaguhamagara mu masaha 24.",
+    videoCall: "Hamagara umujyanama",
+    callConfirm: "Urasabwa gufungura kamera na mikoro kugira ngo uvugane n'umujyanama kuri video. Izina ryawe ntirizatangazwa — ikiganiro ni ibanga. Ukomeze?",
+    callWaiting: "Gusaba ikiganiro kuri video byoherejwe. Umujyanama uri hafi araza kwinjira — fungura idirishya rishya ryafunguwe.",
+    callFailed: "Ntibishobotse gusaba ikiganiro. Ongera ugerageze."
   },
   en: {
     title: "We're listening. Tell Mbwira.",
@@ -250,7 +273,11 @@ const strings = {
       "I can't sleep well",
       "I need a counselor"
     ],
-    escalation: "A counselor will call you within 24 hours."
+    escalation: "A counselor will call you within 24 hours.",
+    videoCall: "Call a counselor",
+    callConfirm: "You'll be asked to allow camera and microphone access to talk to a counselor on video. Your identity stays anonymous — the call is private. Continue?",
+    callWaiting: "Video call request sent. An available counselor will join shortly — use the tab that just opened.",
+    callFailed: "Could not request a call. Please try again."
   }
 };
 
@@ -326,6 +353,7 @@ function applyLanguage(lang) {
   document.getElementById("input").placeholder = s.placeholder;
   document.getElementById("send").textContent = s.send;
   document.getElementById("privacy").textContent = s.privacy;
+  document.getElementById("videoCallLabel").textContent = s.videoCall;
   document.querySelectorAll(".lang-switch button").forEach(b => {
     b.classList.toggle("active", b.dataset.lang === lang);
   });
@@ -335,6 +363,29 @@ function applyLanguage(lang) {
 document.querySelectorAll(".lang-switch button").forEach(btn => {
   btn.onclick = () => applyLanguage(btn.dataset.lang);
 });
+
+document.getElementById("videoCallBtn").onclick = async () => {
+  if (!confirm(strings[language].callConfirm)) return;
+  const btn = document.getElementById("videoCallBtn");
+  btn.disabled = true;
+  try {
+    if (!sessionId) await newSession();
+    const res = await fetch(`${API_BASE}/calls/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: sessionId })
+    });
+    if (!res.ok) throw new Error("request failed");
+    const data = await res.json();
+    document.getElementById("intro").style.display = "none";
+    addMessage("system", strings[language].callWaiting);
+    window.open(`/call?room=${encodeURIComponent(data.room_id)}&role=user&lang=${language}`, "_blank");
+  } catch (err) {
+    console.error(err);
+    alert(strings[language].callFailed);
+  }
+  btn.disabled = false;
+};
 
 document.getElementById("send").onclick = () => {
   sendMessage(document.getElementById("input").value);
