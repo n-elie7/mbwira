@@ -196,18 +196,18 @@ async def stats(
 
     by_reason = {}
 
-    for escalation in total_escalations:
-        by_reason[escalation.reason] = (
-            by_reason.get(escalation.reason, 0) + 1
-        )
+for escalation in total_escalations:
+    by_reason[escalation.reason] = (
+        by_reason.get(escalation.reason, 0) + 1
+    )
 
-        return {
-        "sessions_total": len(total_sessions),
-        "sessions_by_channel": by_channel,
-        "escalations_total": len(total_escalations),
-        "escalations_pending": len(pending),
-        "escalations_by_reason": by_reason,
-    }
+return {
+    "sessions_total": len(total_sessions),
+    "sessions_by_channel": by_channel,
+    "escalations_total": len(total_escalations),
+    "escalations_pending": len(pending),
+    "escalations_by_reason": by_reason,
+}
 
 
 @router.get("/calls", response_model=list[CallOut])
