@@ -364,3 +364,14 @@ async def send_outbound_message(
 
     return {"ok": True}
 
+    await db.commit()
+
+    return {"ok": True}
+
+@router.post("/calls/{call_id}/join")
+async def join_call(
+    call_id: int,
+    x_dashboard_password: str | None = Header(None),
+    db: AsyncSession = Depends(get_db),
+):
+    ...
