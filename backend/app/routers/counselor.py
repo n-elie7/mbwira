@@ -15,7 +15,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.models.db import CallRequest, Escalation, Session, Message, get_db
+from app.models.db import Escalation, Session, Message, get_db
 
 router = APIRouter(
     prefix="/counselor",
@@ -52,13 +52,6 @@ class MessageOut(BaseModel):
 
 class ResolveRequest(BaseModel):
     notes: str | None = None
-
-class CallOut(BaseModel):
-    id: int
-    session_id: str
-    channel: str
-    status: str
-    age_minutes: int
 
 
 @router.get("/escalations", response_model=list[EscalationOut])
@@ -169,7 +162,7 @@ async def resolve_escalation(
 
 @router.get("/stats")
 async def stats(
-    x_dashboard_password: str |None = Header(None),
+    x_dashboard_password: str | None = Header(None),
     db: AsyncSession = Depends(get_db),
 ):
     _check_auth(x_dashboard_password)
@@ -208,37 +201,6 @@ async def stats(
         "escalations_pending": len(pending),
         "escalations_by_reason": by_reason,
     }
-
-
-@router.get("/calls", response_model=list[CallOut])
-async def list_calls(
-    x_dashboard_password: str | None = Header(None),
-    db: AsyncSession = Depends(get_db),
-):
-    """Open video call requests, newest first. Room ids are only revealed on join."""
-    _check_auth(x_dashboard_password)
-
-    q = await db.execute(
-        select(CallRequest)
-        .options(selectinload(CallRequest.session))
-        .where(CallRequest.status.in_(("waiting", "active")))
-        .order_by(desc(CallRequest.created_at))
-        .limit(50)
-    )
-
-    now = datetime.utcnow()
-
-    return [
-        CallOut(
-            id=call.id,
-            session_id=call.session.session_id,
-            channel=call.session.channel,
-            status=call.status,
-            age_minutes=int((now - call.created_at).total_seconds() / 60),
-        )
-        for call in q.scalars()
-    ]
-
 
 # -------- Callback actions --------
 
@@ -364,14 +326,3 @@ async def send_outbound_message(
 
     return {"ok": True}
 
-    await db.commit()
-
-    return {"ok": True}
-
-@router.post("/calls/{call_id}/join")
-async def join_call(
-    call_id: int,
-    x_dashboard_password: str | None = Header(None),
-    db: AsyncSession = Depends(get_db),
-):
-    ...
