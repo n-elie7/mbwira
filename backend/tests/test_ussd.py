@@ -57,3 +57,22 @@ async def test_counselor_request_returns_end_and_escalates(client, db):
         await db.execute(select(Escalation).where(Escalation.session_id == sess.id))
     ).scalar_one()
     assert esc.reason == "counselor_request"
+
+
+async def test_suicidal_leaf_escalates(client, db):
+    resp = await _post_ussd(client, session_id="ATSui", text="2*5")
+    assert resp.text.startswith("END ")
+
+    sess = (
+        await db.execute(select(DBSession).where(DBSession.session_id == "ATSui"))
+    ).scalar_one()
+    esc = (
+        await db.execute(select(Escalation).where(Escalation.session_id == sess.id))
+    ).scalar_one()
+    assert esc.reason == "suicidal_ideation"
+
+
+async def test_missing_phone_number_is_allowed(client):
+    # Africa's Talking may omit the number; endpoint must not crash.
+    resp = await _post_ussd(client, session_id="ATNoPhone", phone="")
+    assert resp.status_code == 200
