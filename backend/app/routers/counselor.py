@@ -94,7 +94,9 @@ async def list_escalations(
                 notes=esc.notes,
                 created_at=esc.created_at,
                 message_count=len(esc.session.messages),
-                contact_available=bool(esc.session.contact_number),
+                # Sessions are anonymised: we store only a one-way phone_hash,
+                # never a dialable number, so there is nothing to reveal.
+                contact_available=False,
                 age_minutes=age,
             )
         )
@@ -273,33 +275,12 @@ async def reveal_contact(
     if not esc:
         raise HTTPException(404, "Not found")
 
-    if not esc.session.contact_number:
-        raise HTTPException(
-            404,
-            "No contact number on file for this session.",
-        )
-
-    db.add(
-        Message(
-            session_id=esc.session.id,
-            role="system",
-            content=(
-                "[AUDIT] Contact number revealed to counselor. "
-                f"Reason: {body.reason}"
-            ),
-            flagged=False,
-        )
+    # Sessions are anonymised by design: only a one-way SHA-256 phone_hash is
+    # ever stored, never a dialable number — so there is nothing to reveal.
+    raise HTTPException(
+        404,
+        "This session is anonymised; no phone number is stored to reveal.",
     )
-
-    if esc.status == "pending":
-        esc.status = "taken"
-
-    await db.commit()
-
-    return {
-        "contact_number": esc.session.contact_number,
-        "channel": esc.session.channel,
-    }
 
 
 class SendOutboundMessage(BaseModel):
@@ -332,41 +313,13 @@ async def send_outbound_message(
     if not esc:
         raise HTTPException(404, "Not found")
 
-    sess = esc.session
-
-    if sess.channel != "whatsapp" or not sess.contact_number:
-        raise HTTPException(
-            400,
-            "Outbound messaging only supported for WhatsApp "
-            "sessions with a known number.",
-        )
-
-    from app.routers.whatsapp import _send_whatsapp
-
-    await _send_whatsapp(
-        sess.contact_number,
-        body.text,
+    # Anonymised sessions store no dialable number, so we cannot send an
+    # outbound WhatsApp message from the dashboard.
+    raise HTTPException(
+        400,
+        "Outbound messaging is unavailable: sessions are anonymised and "
+        "store no phone number.",
     )
-
-    db.add(
-        Message(
-            session_id=sess.id,
-            role="assistant",
-            content=f"[COUNSELOR] {body.text}",
-            flagged=False,
-        )
-    )
-
-    if esc.status == "pending":
-        esc.status = "taken"
-
-    await db.commit()
-
-    return {"ok": True}
-
-    await db.commit()
-
-    return {"ok": True}
 
 @router.post("/calls/{call_id}/join")
 async def join_call(
@@ -374,4 +327,26 @@ async def join_call(
     x_dashboard_password: str | None = Header(None),
     db: AsyncSession = Depends(get_db),
 ):
-    ...
+    """Hand the counselor the room id so their browser can join the call."""
+    _check_auth(x_dashboard_password)
+
+    q = await db.execute(select(CallRequest).where(CallRequest.id == call_id))
+    call = q.scalar_one_or_none()
+
+    if not call:
+        raise HTTPException(404, "Not found")
+
+    if call.status not in ("waiting", "active"):
+        raise HTTPException(410, "This call has already ended.")
+
+    db.add(
+        Message(
+            session_id=call.session_id,
+            role="system",
+            content="[AUDIT] Counselor accepted the video call request.",
+            flagged=False,
+        )
+    )
+    await db.commit()
+
+    return {"room_id": call.room_id, "status": call.status}

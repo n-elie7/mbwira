@@ -123,13 +123,19 @@
     width: 100%;
     background: #fff;
     border-radius: 6px;
-    overflow: hidden;
+    /* Scroll horizontally when the columns don't fit (e.g. on phones)
+       instead of clipping or crushing them. */
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
     border: 1px solid rgba(45,61,46,0.1);
   }
 
   .escalation-row {
     display: grid;
-    grid-template-columns: 120px 140px 100px 1fr 120px;
+    grid-template-columns: 120px 140px 100px minmax(160px, 1fr) 120px;
+    /* Keep columns readable; the table scrolls sideways below this width. */
+    min-width: 660px;
     gap: 1rem;
     padding: 1rem;
     border-bottom: 1px solid rgba(45,61,46,0.08);
@@ -260,4 +266,19 @@
     color: var(--muted);
     background: #fff;
     border-radius: 6px;
+  }
+
+  /* --- Mobile layout --- */
+  @media (max-width: 640px) {
+    .topbar { padding: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .content { padding: 1rem; }
+    .stats { gap: 0.75rem; margin-bottom: 1.5rem; }
+    .stat-card { padding: 1rem; }
+    .stat-card .value { font-size: 1.8rem; }
+    h2 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; }
+    .modal-header { padding: 1.2rem 1.2rem; }
+    .modal-body { padding: 1.2rem; }
+    .resolve-section { padding: 1.2rem; }
+    .msg-bubble.user { margin-left: 1rem; }
+    .msg-bubble.assistant { margin-right: 1rem; }
   }
