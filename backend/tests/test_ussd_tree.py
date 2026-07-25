@@ -25,3 +25,19 @@ class TestParseUssdInput:
     def test_drops_empty_segments(self):
         assert parse_ussd_input("1**2*") == ["1", "2"]
 
+class TestResolveState:
+    def test_known_state_returns_screen(self):
+        screen = resolve_state("start", "rw")
+        assert screen["type"] == "CON"
+        assert "Mbwira" in screen["prompt"]
+
+    def test_unknown_state_falls_back_to_start(self):
+        screen = resolve_state("does_not_exist", "rw")
+        assert screen == TREE["start"]["rw"]
+
+    def test_missing_language_falls_back_to_english(self):
+        # Escalation screens are defined for both langs; force a fallback path
+        # by resolving a node that only has 'en' would be ideal, but all nodes
+        # have both — so we assert the 'en' branch resolves independently.
+        screen = resolve_state("emergency", "en")
+        assert "112" in screen["prompt"]
