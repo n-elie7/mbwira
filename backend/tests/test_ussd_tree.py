@@ -55,3 +55,40 @@ class TestNextState:
 
     def test_whitespace_in_input_is_stripped(self):
         assert next_state("start", " 1 ", "rw") == "srh_menu"
+
+class TestWalkTree:
+    def test_empty_text_shows_start_kinyarwanda(self):
+        state, screen = walk_tree("", lang="rw")
+        assert state == "start"
+        assert "Mbwira" in screen["prompt"]
+
+    def test_navigate_into_srh(self):
+        state, screen = walk_tree("1", lang="rw")
+        assert state == "srh_menu"
+
+    def test_language_toggle_to_english(self):
+        state, screen = walk_tree("9", lang="rw")
+        assert state == "start"
+        assert "Welcome to Mbwira" in screen["prompt"]
+
+    def test_counselor_request_is_terminal_and_escalates(self):
+        state, screen = walk_tree("3", lang="rw")
+        assert state == "counselor_request"
+        assert screen["type"] == "END"
+        assert screen.get("triggers_escalation") == "counselor_request"
+
+    def test_suicidal_leaf_triggers_escalation(self):
+        state, screen = walk_tree("2*5", lang="rw")
+        assert state == "mh_suicidal"
+        assert screen["type"] == "END"
+        assert screen.get("triggers_escalation") == "suicidal_ideation"
+
+    def test_emergency_screen(self):
+        state, screen = walk_tree("4", lang="rw")
+        assert state == "emergency"
+        assert "112" in screen["prompt"]
+
+    def test_deep_navigation_and_back(self):
+        # start -> srh_menu -> contraception -> back to srh_menu
+        state, _ = walk_tree("1*1*0", lang="rw")
+        assert state == "srh_menu"
