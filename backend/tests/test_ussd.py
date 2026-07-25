@@ -36,3 +36,24 @@ async def test_session_is_created_with_hashed_phone(client, db):
     assert "250788123456" not in sess.phone_hash
 
 
+async def test_same_session_id_is_reused(client, db):
+    await _post_ussd(client, session_id="ATReuse", text="")
+    await _post_ussd(client, session_id="ATReuse", text="1")
+
+    rows = (
+        await db.execute(select(DBSession).where(DBSession.session_id == "ATReuse"))
+    ).scalars().all()
+    assert len(rows) == 1
+
+
+async def test_counselor_request_returns_end_and_escalates(client, db):
+    resp = await _post_ussd(client, session_id="ATEsc", text="3")
+    assert resp.text.startswith("END ")
+
+    sess = (
+        await db.execute(select(DBSession).where(DBSession.session_id == "ATEsc"))
+    ).scalar_one()
+    esc = (
+        await db.execute(select(Escalation).where(Escalation.session_id == sess.id))
+    ).scalar_one()
+    assert esc.reason == "counselor_request"
