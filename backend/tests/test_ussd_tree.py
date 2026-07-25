@@ -41,3 +41,17 @@ class TestResolveState:
         # have both — so we assert the 'en' branch resolves independently.
         screen = resolve_state("emergency", "en")
         assert "112" in screen["prompt"]
+
+class TestNextState:
+    def test_valid_option_advances(self):
+        assert next_state("start", "1", "rw") == "srh_menu"
+        assert next_state("start", "2", "rw") == "mh_menu"
+
+    def test_back_option_returns_to_parent(self):
+        assert next_state("srh_menu", "0", "rw") == "start"
+
+    def test_unknown_input_stays_put(self):
+        assert next_state("srh_menu", "7", "rw") == "srh_menu"
+
+    def test_whitespace_in_input_is_stripped(self):
+        assert next_state("start", " 1 ", "rw") == "srh_menu"
