@@ -92,3 +92,30 @@ class TestWalkTree:
         # start -> srh_menu -> contraception -> back to srh_menu
         state, _ = walk_tree("1*1*0", lang="rw")
         assert state == "srh_menu"
+
+class TestTreeInvariants:
+    """Structural guarantees the whole tree must satisfy."""
+
+    @pytest.mark.parametrize("state", list(TREE.keys()))
+    def test_both_languages_present(self, state):
+        assert "rw" in TREE[state]
+        assert "en" in TREE[state]
+
+    @pytest.mark.parametrize("state", list(TREE.keys()))
+    def test_every_prompt_within_ussd_limit(self, state):
+        for lang in ("rw", "en"):
+            prompt = TREE[state][lang]["prompt"]
+            assert len(prompt) <= USSD_MAX_CHARS, f"{state}/{lang} too long"
+
+    @pytest.mark.parametrize("state", list(TREE.keys()))
+    def test_type_is_con_or_end(self, state):
+        for lang in ("rw", "en"):
+            assert TREE[state][lang]["type"] in ("CON", "END")
+
+    def test_con_option_targets_all_exist(self):
+        # Every option must point at a real state (or the 'start_en' toggle).
+        valid = set(TREE.keys()) | {"start_en"}
+        for state, langs in TREE.items():
+            for lang, screen in langs.items():
+                for target in screen.get("options", {}).values():
+                    assert target in valid, f"{state}/{lang} -> {target}"
