@@ -41,6 +41,21 @@ async def test_escalations_empty_list_with_auth(client):
     assert resp.json() == []
 
 
+async def test_escalations_with_pending_row_does_not_crash(client, db):
+    # Regression: list_escalations used to read Session.contact_number, which
+    # does not exist on the anonymised model, and 500'd whenever any pending
+    # escalation existed — which broke the whole dashboard load.
+    await _seed_escalation(db, session_id="web_pending", reason="suicidal_ideation")
+
+    resp = await client.get("/counselor/escalations?status=pending", headers=AUTH)
+    assert resp.status_code == 200
+    rows = resp.json()
+    assert len(rows) == 1
+    assert rows[0]["reason"] == "suicidal_ideation"
+    # No dialable number is ever stored for anonymised sessions.
+    assert rows[0]["contact_available"] is False
+
+
 async def test_stats_requires_auth(client):
     resp = await client.get("/counselor/stats")
     assert resp.status_code == 401
@@ -97,3 +112,35 @@ async def test_list_calls_empty(client):
     resp = await client.get("/counselor/calls", headers=AUTH)
     assert resp.status_code == 200
     assert resp.json() == []
+
+
+async def test_join_call_returns_room_id(client, db):
+    # Regression: join_call was gutted to `...` and returned null, so the
+    # dashboard's `data.room_id` threw and the counselor could never open the
+    # call page. It must hand back the room id and status.
+    from app.models.db import CallRequest, Session as DBSession
+
+    sess = DBSession(session_id="web_call_join", channel="web")
+    db.add(sess)
+    await db.commit()
+    await db.refresh(sess)
+    call = CallRequest(session_id=sess.id, room_id="room_test_join")
+    db.add(call)
+    await db.commit()
+    await db.refresh(call)
+
+    resp = await client.post(f"/counselor/calls/{call.id}/join", headers=AUTH)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["room_id"] == "room_test_join"
+    assert body["status"] == "waiting"
+
+
+async def test_join_call_requires_auth(client):
+    resp = await client.post("/counselor/calls/1/join")
+    assert resp.status_code == 401
+
+
+async def test_join_unknown_call_404(client):
+    resp = await client.post("/counselor/calls/999/join", headers=AUTH)
+    assert resp.status_code == 404
