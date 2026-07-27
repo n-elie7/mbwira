@@ -1,21 +1,16 @@
 """WhatsApp Cloud API webhook — connects WhatsApp messages to our chat pipeline."""
 import hashlib
 import logging
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+
 import httpx
-from fastapi import HTTPException, Query
-
 from app.config import settings
-
-from app.models.db import Session, Message, get_db
-
-from fastapi import APIRouter
-from fastapi import Depends, Request
-
+from app.models.db import Message, Session, get_db
+from app.services.handoff import create_escalation
 from app.services.llm import ask_claude
 from app.services.safety import check_user_message
-from app.services.handoff import create_escalation
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/whatsapp", tags=["whatsapp"])
@@ -30,12 +25,12 @@ async def _get_or_create_session(db: AsyncSession, phone: str) -> Session:
     phone_hash = _hash_phone(phone)
     token = f"wa_{phone_hash[:32]}"
 
-    result = await db.execute(select(Session).where(Session.session_token == token))
+    result = await db.execute(select(Session).where(Session.session_id == token))
     session = result.scalar_one_or_none()
     if session:
         return session
 
-    session = Session(session_token=token, channel="whatsapp", language="rw")
+    session = Session(session_id=token, channel="whatsapp", language="rw")
     db.add(session)
     await db.commit()
     await db.refresh(session)
@@ -71,6 +66,7 @@ async def verify_webhook(
     if hub_mode == "subscribe" and hub_verify_token == settings.whatsapp_verify_token:
         return int(hub_challenge) if hub_challenge and hub_challenge.isdigit() else hub_challenge
     raise HTTPException(403, "Verification failed")
+
 @router.post("")
 async def receive_message(request: Request, db: AsyncSession = Depends(get_db)):
     """Receives an incoming WhatsApp message, runs it through the chat pipeline, replies."""
@@ -93,7 +89,7 @@ async def receive_message(request: Request, db: AsyncSession = Depends(get_db)):
     risk = check_user_message(text)
     db.add(Message(
         session_id=session.id,
-        sender="user",
+        role="user",
         content=text,
         flagged=risk.triggered,
         flag_reason=risk.reason,
@@ -103,14 +99,14 @@ async def receive_message(request: Request, db: AsyncSession = Depends(get_db)):
     history_result = await db.execute(
         select(Message).where(Message.session_id == session.id).order_by(Message.created_at.asc()).limit(20)
     )
-    history = [{"role": m.sender, "content": m.content} for m in history_result.scalars()]
+    history = [{"role": m.role, "content": m.content} for m in history_result.scalars()]
 
     reply_text = await ask_claude(history)
 
     if risk.triggered:
         await create_escalation(db, session, reason=risk.reason, level="counselor")
 
-    db.add(Message(session_id=session.id, sender="assistant", content=reply_text))
+    db.add(Message(session_id=session.id, role="assistant", content=reply_text))
     await db.commit()
 
     await _send_whatsapp_reply(from_phone, reply_text)
