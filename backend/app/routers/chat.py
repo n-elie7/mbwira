@@ -12,7 +12,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.db import Session as DBSession, Message, get_db
-from app.services.llm import ask_claude
+from app.services.llm import LANGUAGE_NAMES, ask_claude
 from app.services.safety import (
     check_user_message,
     extract_escalation_from_response,
@@ -22,6 +22,8 @@ from app.services.handoff import create_escalation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/chat", tags=["chat"])
+
+SUPPORTED_LANGUAGES = frozenset(LANGUAGE_NAMES)
 
 
 class NewSessionResponse(BaseModel):
@@ -77,7 +79,11 @@ async def _load_history(db: AsyncSession, session_pk: int, limit: int = 20) -> l
 @router.post("", response_model=ChatResponse)
 async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResponse:
     sess = await _load_session(db, req.session_id)
-    language = (req.language or "rw").strip().lower() 
+    # The web client has a language picker; honour it rather than making the
+    # model guess. Unknown codes fall back to the session's current language.
+    language = (req.language or "").strip().lower()
+    if language not in SUPPORTED_LANGUAGES:
+        language = sess.language or "rw"
     sess.language = language
 
     # 1. Check the user's message before sending it to the language model
@@ -100,10 +106,10 @@ async def chat(req: ChatRequest, db: AsyncSession = Depends(get_db)) -> ChatResp
     if not history or history[-1]["role"] != "user":
         history.append({"role": "user", "content": req.message})
 
-    reply_text = await ask_claude(history)
+    reply_text = await ask_claude(history, language=language)
     logger.info(
-    "Generated chat response for session %s",
-    req.session_id,
+    "Generated chat response for session %s in %s",
+    req.session_id, language,
 )
 
     # 4. Inspect the generated response for escalation tags
