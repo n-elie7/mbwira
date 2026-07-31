@@ -4,9 +4,9 @@ The LLM is stubbed (``stub_llm``) so these tests are deterministic and make no
 network calls. They focus on the pipeline the router owns: session handling,
 safety pre-screening, escalation, and the safety fallback text.
 """
-import pytest
 
-from app.models.db import Escalation, Message, Session as DBSession
+from app.models.db import Escalation, Message
+from app.models.db import Session as DBSession
 from sqlalchemy import select
 
 
@@ -119,3 +119,69 @@ async def test_messages_are_persisted(client, stub_llm, db):
     ).scalars().all()
     roles = [m.role for m in msgs]
     assert "user" in roles and "assistant" in roles
+
+
+# --- language selection -------------------------------------------------
+# The web client has a language picker (chat.html). Its value must reach the
+# model, otherwise the system prompt's "default to Kinyarwanda" rule wins and
+# English users get Kinyarwanda replies.
+
+
+async def test_selected_language_is_passed_to_the_model(client, stub_llm):
+    sid = await _new_session_id(client)
+    await client.post(
+        "/chat",
+        json={"session_id": sid, "message": "I have a question", "language": "en"},
+    )
+    assert stub_llm.calls[-1]["language"] == "en"
+
+
+async def test_selected_language_is_stored_on_the_session(client, stub_llm, db):
+    sid = await _new_session_id(client)
+    await client.post(
+        "/chat",
+        json={"session_id": sid, "message": "hello", "language": "en"},
+    )
+    sess = (
+        await db.execute(select(DBSession).where(DBSession.session_id == sid))
+    ).scalar_one()
+    assert sess.language == "en"
+
+
+async def test_language_can_be_switched_mid_session(client, stub_llm):
+    sid = await _new_session_id(client)
+    await client.post(
+        "/chat", json={"session_id": sid, "message": "muraho", "language": "rw"}
+    )
+    await client.post(
+        "/chat", json={"session_id": sid, "message": "hello", "language": "en"}
+    )
+    assert stub_llm.calls[-1]["language"] == "en"
+
+
+async def test_unknown_language_falls_back_to_session_language(client, stub_llm):
+    sid = await _new_session_id(client)
+    await client.post(
+        "/chat", json={"session_id": sid, "message": "hello", "language": "en"}
+    )
+    # A junk code must not be stored or forwarded; the session's choice sticks.
+    await client.post(
+        "/chat", json={"session_id": sid, "message": "hello", "language": "xx"}
+    )
+    assert stub_llm.calls[-1]["language"] == "en"
+
+
+async def test_english_safety_text_used_when_english_selected(client, stub_llm):
+    stub_llm.reply = "I hear you."
+    sid = await _new_session_id(client)
+    resp = await client.post(
+        "/chat",
+        json={
+            "session_id": sid,
+            "message": "i want to kill myself",
+            "language": "en",
+        },
+    )
+    body = resp.json()
+    assert body["escalated"] is True
+    assert "You matter" in body["reply"]
